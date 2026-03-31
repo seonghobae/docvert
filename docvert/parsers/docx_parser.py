@@ -4,10 +4,10 @@ import logging
 from pathlib import Path
 from typing import Optional, Any
 import docx
-import mammoth
+import mammoth  # type: ignore
 from docx.document import Document as _Document
 from docx.oxml.text.paragraph import CT_P
-from docx.table import _Cell, Table
+from docx.table import Table
 from docx.text.paragraph import Paragraph
 
 from docvert.models.document import (
@@ -72,7 +72,7 @@ class DocxParser:
         Returns:
             Document: The parsed document.
         """
-        doc: _Document = docx.Document(file_path)
+        doc: _Document = docx.Document(str(file_path))
         docvert_doc = Document()
 
         for element in doc.element.body:

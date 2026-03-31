@@ -2,10 +2,9 @@ import sys
 import pytest
 import runpy
 import importlib
-from unittest.mock import patch, MagicMock
-from pathlib import Path
+from unittest.mock import patch
 
-from docvert.cli.main import main, parse_args
+from docvert.cli.main import main
 
 
 @pytest.fixture

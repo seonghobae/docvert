@@ -1,7 +1,7 @@
 [project]
 name = "docvert"
 version = "0.1.0"
-description = "Add your description here"
+description = "Docvert: Convert documents to Markdown"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
@@ -17,8 +17,13 @@ dependencies = [
     "unstructured>=0.22.6",
 ]
 
+[project.scripts]
+docvert = "docvert.cli.main:main"
+
 [dependency-groups]
 dev = [
+    "mypy>=1.19.1",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
+    "ruff>=0.15.8",
 ]

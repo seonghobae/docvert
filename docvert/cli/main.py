@@ -11,7 +11,7 @@ try:
     from docvert.core.batch import BatchProcessor
 except ImportError:
     # Stub for BatchProcessor if it's not yet implemented
-    class BatchProcessor:
+    class BatchProcessor:  # type: ignore
         def __init__(self, config: DocvertConfig):
             self.config = config
 
