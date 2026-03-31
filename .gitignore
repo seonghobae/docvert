@@ -2,6 +2,7 @@
 __pycache__/
 .ruff_cache/
 .pytest_cache/
+.mypy_cache/
 *.pyc
 .env
 registered_agents.json
@@ -11,3 +12,5 @@ test*.pdf
 failures.csv
 coverage.xml
 site/
+execution_summary.txt
+task_completed.txt
