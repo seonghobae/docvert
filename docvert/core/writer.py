@@ -33,6 +33,22 @@ class Writer:
             f.write(document.to_markdown())
         return output_path
 
+    def write_markdown_string(self, markdown_content: str, relative_stem: str) -> Path:
+        """Writes a Markdown string to a file.
+
+        Args:
+            markdown_content (str): The markdown string to write.
+            relative_stem (str): The filename stem (without extension).
+
+        Returns:
+            Path: Path to the written markdown file.
+        """
+        output_path = self.output_dir / f"{relative_stem}.md"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(markdown_content)
+        return output_path
+
     def write_json_sidecar(self, metadata: Dict[str, Any], relative_stem: str) -> Path:
         """Writes a JSON sidecar file containing metadata.
 

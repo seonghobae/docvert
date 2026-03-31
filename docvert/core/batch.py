@@ -9,6 +9,11 @@ from docvert.core.writer import Writer
 from docvert.parsers.docx_parser import DocxParser
 from docvert.parsers.pdf_parser import PdfParser
 
+try:
+    from docvert.agent.refiner import LLMRefiner
+except ImportError:
+    LLMRefiner = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -141,8 +146,17 @@ class BatchProcessor:
 
         doc = parser.parse(file_path)
 
-        # Extract metadata
-        output_md_path = self.writer.write_markdown(doc, stem)
+        # Refine markdown if LLM refiner is configured
+        if self.config.use_llm_refiner and LLMRefiner:
+            raw_markdown = doc.to_markdown()
+            refiner = LLMRefiner(model=self.config.llm_model)
+            refined_markdown = refiner.refine_markdown(raw_markdown)
+            output_md_path = self.writer.write_markdown_string(refined_markdown, stem)
+            doc.metadata["llm_refined"] = True
+        else:
+            output_md_path = self.writer.write_markdown(doc, stem)
+            doc.metadata["llm_refined"] = False
+
         self.writer.create_assets_dir(stem)
 
         metadata = {
@@ -150,6 +164,7 @@ class BatchProcessor:
             "input_format": ext,
             "output_file": str(output_md_path),
             "parser_path_used": parser_path_used,
+            "llm_refined": doc.metadata.get("llm_refined", False),
             "file_hash": file_hash or calculate_md5(file_path),
             "warnings": doc.metadata.get("warnings", []),
             "confidence": doc.metadata.get("confidence", 1.0),

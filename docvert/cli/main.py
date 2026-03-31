@@ -104,6 +104,19 @@ def parse_args() -> argparse.Namespace:
         default=False,
     )
 
+    parser.add_argument(
+        "--use-llm-refiner",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Use LLM agent to refine the generated markdown output.",
+    )
+    parser.add_argument(
+        "--llm-model",
+        type=str,
+        default="gpt-4o-mini",
+        help="The LLM model to use for refinement (default: gpt-4o-mini).",
+    )
+
     return parser.parse_args()
 
 
@@ -162,6 +175,8 @@ def main():
         cache_by_hash=args.cache_by_hash,
         deterministic=args.deterministic,
         aggressive_heading_inference=args.aggressive_heading_inference,
+        use_llm_refiner=args.use_llm_refiner,
+        llm_model=args.llm_model,
     )
 
     # Process
