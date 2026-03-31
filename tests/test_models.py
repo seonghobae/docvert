@@ -4,7 +4,7 @@ from docvert.models.config import DocvertConfig
 from docvert.models.document import Block, Paragraph, Heading, Table, Document
 
 
-def test_config_defaults():
+def test_config_defaults() -> None:
     config = DocvertConfig()
     assert config.language_hint == "auto"
     assert config.ocr_languages == ["ko", "en"]
@@ -23,7 +23,7 @@ def test_config_defaults():
     assert config.aggressive_heading_inference is False
 
 
-def test_config_overrides():
+def test_config_overrides() -> None:
     config = DocvertConfig(
         language_hint="ko",
         ocr_languages=["en", "fr"],
@@ -36,12 +36,12 @@ def test_config_overrides():
     assert config.include_headers_footers is True
 
 
-def test_config_validation_error():
+def test_config_validation_error() -> None:
     with pytest.raises(ValidationError):
-        DocvertConfig(language_hint="invalid_language")
+        DocvertConfig(language_hint="invalid_language")  # type: ignore[arg-type]
 
 
-def test_block_initialization():
+def test_block_initialization() -> None:
     block = Block(content="Base block", metadata={"key": "value"})
     assert block.content == "Base block"
     assert block.metadata == {"key": "value"}
@@ -50,13 +50,13 @@ def test_block_initialization():
     assert empty_block.metadata == {}
 
 
-def test_paragraph_initialization():
+def test_paragraph_initialization() -> None:
     para = Paragraph(content="This is a paragraph.")
     assert para.content == "This is a paragraph."
     assert para.metadata == {}
 
 
-def test_heading_initialization():
+def test_heading_initialization() -> None:
     head = Heading(content="Title", level=2, score=90)
     assert head.content == "Title"
     assert head.level == 2
@@ -67,7 +67,7 @@ def test_heading_initialization():
     assert default_head.score == 100
 
 
-def test_table_initialization():
+def test_table_initialization() -> None:
     table = Table(content="", rows=[["A", "B"], ["1", "2"]])
     assert table.content == ""
     assert table.rows == [["A", "B"], ["1", "2"]]
@@ -76,14 +76,14 @@ def test_table_initialization():
     assert empty_table.rows == []
 
 
-def test_document_to_markdown_empty():
+def test_document_to_markdown_empty() -> None:
     doc = Document(metadata={"author": "Test"})
     assert doc.metadata == {"author": "Test"}
     assert doc.blocks == []
     assert doc.to_markdown() == ""
 
 
-def test_document_to_markdown_heading_paragraph():
+def test_document_to_markdown_heading_paragraph() -> None:
     blocks = [
         Heading(content="Main Title", level=1),
         Paragraph(content="Introduction paragraph."),
@@ -98,7 +98,7 @@ def test_document_to_markdown_heading_paragraph():
     assert markdown == expected
 
 
-def test_document_to_markdown_table():
+def test_document_to_markdown_table() -> None:
     blocks = [
         Paragraph(content="Here is a table:"),
         Table(content="", rows=[["Header 1", "Header 2"], ["Val 1", "Val 2"]]),
@@ -109,7 +109,7 @@ def test_document_to_markdown_table():
     assert markdown == expected
 
 
-def test_document_to_markdown_other_block():
+def test_document_to_markdown_other_block() -> None:
     # If a generic block is used, it should be ignored by the to_markdown method right now
     blocks = [Block(content="Invisible"), Paragraph(content="Visible")]
     doc = Document(blocks=blocks)

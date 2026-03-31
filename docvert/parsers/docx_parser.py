@@ -14,6 +14,7 @@ from docvert.models.document import (
     Document,
     Block,
     Heading,
+    Image,
     Paragraph as DocvertParagraph,
     Table as DocvertTable,
 )
@@ -37,6 +38,11 @@ class DocxParser:
     """
 
     def __init__(self, config: Optional[Any] = None):
+        """Initialize the DocxParser.
+
+        Args:
+            config: Optional configuration object.
+        """
         self.config = config or DocvertConfig()
 
     def parse(self, file_path: str | Path) -> Document:
@@ -78,10 +84,8 @@ class DocxParser:
         for element in doc.element.body:
             if isinstance(element, CT_P):
                 p = Paragraph(element, doc)
-                if not p.text.strip():
-                    continue
-                block = self._process_paragraph(p)
-                docvert_doc.blocks.append(block)
+                blocks = self._process_paragraph(p)
+                docvert_doc.blocks.extend(blocks)
             elif element.tag.endswith("tbl"):
                 # Very basic table handling
                 for table in doc.tables:
@@ -91,30 +95,110 @@ class DocxParser:
 
         return docvert_doc
 
-    def _process_paragraph(self, p: Paragraph) -> Block:
-        """Processes a python-docx Paragraph into a Docvert Block.
+    def _process_paragraph(self, p: Paragraph) -> list[Block]:
+        """Processes a python-docx Paragraph into a list of Docvert Blocks.
 
-        Determines if the paragraph is a heading or normal text based on styling and heuristics.
+        Determines if the paragraph is a heading or normal text based on styling and heuristics,
+        and extracts any inline images.
 
         Args:
             p (Paragraph): The python-docx paragraph element.
 
         Returns:
-            Block: The corresponding Docvert block (Heading or Paragraph).
+            list[Block]: A list of corresponding Docvert blocks (Heading, Paragraph, and/or Image).
         """
-        score, level = self._calculate_heading_score(p)
+        blocks: list[Block] = []
         text = p.text.strip()
 
-        metadata = {"style": p.style.name if p.style else None, "score": score}
+        # Extract text block if any
+        if text:
+            score, level = self._calculate_heading_score(p)
+            metadata = {"style": p.style.name if p.style else None, "score": score}
 
-        if score >= 85:
-            return Heading(content=text, level=level, score=score, metadata=metadata)
-        elif score >= 70:
-            logger.warning(f"Borderline heading (score {score}): {text[:30]}...")
-            # We treat it as a heading or paragraph depending on config. We'll default to paragraph here with a warning.
-            return DocvertParagraph(content=text, metadata=metadata)
-        else:
-            return DocvertParagraph(content=text, metadata=metadata)
+            if score >= 85:
+                blocks.append(
+                    Heading(content=text, level=level, score=score, metadata=metadata)
+                )
+            elif score >= 70:
+                logger.warning(f"Borderline heading (score {score}): {text[:30]}...")
+                blocks.append(DocvertParagraph(content=text, metadata=metadata))
+            else:
+                blocks.append(DocvertParagraph(content=text, metadata=metadata))
+
+        # Extract images from runs
+        for run in p.runs:
+            drawings = run._element.findall(
+                ".//*{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing"
+            )
+            if not drawings:
+                # Fallback for mock tests without namespaces
+                drawings = run._element.findall(".//drawing")
+
+            for drawing in drawings:
+                blips = drawing.findall(
+                    ".//*{http://schemas.openxmlformats.org/drawingml/2006/main}blip"
+                )
+                if not blips:
+                    # Fallback for mock tests
+                    blips = drawing.findall(".//blip")
+
+                for blip in blips:
+                    embed_id = blip.get(
+                        "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed"
+                    )
+                    if not embed_id:
+                        # Fallback for mock tests
+                        embed_id = blip.get("embed")
+
+                    if not embed_id and hasattr(blip, "attrib"):
+                        # Sometimes lxml attrib is just 'embed'
+                        embed_id = blip.attrib.get("embed") or blip.attrib.get(
+                            "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed"
+                        )
+
+                    # Get the part from the relationship ID
+                    if (
+                        embed_id
+                        and hasattr(p, "part")
+                        and hasattr(p.part, "related_parts")
+                    ):
+                        part = p.part.related_parts.get(embed_id)
+                        if part:
+                            # Map content type to extension
+                            ext = self._get_extension_from_content_type(
+                                part.content_type
+                            )
+                            blocks.append(
+                                Image(
+                                    content="",
+                                    alt_text="extracted image",
+                                    extension=ext,
+                                    image_bytes=part.blob,
+                                )
+                            )
+
+        return blocks
+
+    def _get_extension_from_content_type(self, content_type: str) -> str:
+        """Maps an image content type to a file extension.
+
+        Args:
+            content_type (str): The MIME type of the image.
+
+        Returns:
+            str: The corresponding file extension (e.g., '.png').
+        """
+        mapping = {
+            "image/jpeg": ".jpg",
+            "image/png": ".png",
+            "image/gif": ".gif",
+            "image/bmp": ".bmp",
+            "image/tiff": ".tiff",
+            "image/x-icon": ".ico",
+            "image/svg+xml": ".svg",
+            "image/webp": ".webp",
+        }
+        return mapping.get(content_type, ".bin")
 
     def _calculate_heading_score(self, p: Paragraph) -> tuple[int, int]:
         """Heuristics to determine if a paragraph is a heading.

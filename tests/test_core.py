@@ -1,3 +1,4 @@
+from typing import Any
 import json
 import hashlib
 from pathlib import Path
@@ -13,14 +14,14 @@ from docvert.core.batch import BatchProcessor, calculate_md5
 # --- tests for writer.py ---
 
 
-def test_writer_init(tmp_path):
+def test_writer_init(tmp_path: Path) -> None:
     """Test that Writer creates the output directory upon initialization."""
     output_dir = tmp_path / "out"
     Writer(output_dir)
     assert output_dir.exists()
 
 
-def test_writer_write_markdown(tmp_path):
+def test_writer_write_markdown(tmp_path: Path) -> None:
     writer = Writer(tmp_path)
     doc = MagicMock(spec=Document)
     doc.to_markdown.return_value = "# Markdown Content"
@@ -30,7 +31,7 @@ def test_writer_write_markdown(tmp_path):
     assert out_path.read_text(encoding="utf-8") == "# Markdown Content"
 
 
-def test_writer_write_json_sidecar(tmp_path):
+def test_writer_write_json_sidecar(tmp_path: Path) -> None:
     writer = Writer(tmp_path)
     meta = {"key": "value"}
     out_path = writer.write_json_sidecar(meta, "test_file")
@@ -39,7 +40,7 @@ def test_writer_write_json_sidecar(tmp_path):
         assert json.load(f) == meta
 
 
-def test_writer_create_assets_dir(tmp_path):
+def test_writer_create_assets_dir(tmp_path: Path) -> None:
     writer = Writer(tmp_path)
     assets_dir = writer.create_assets_dir("test_file")
     assert assets_dir == tmp_path / "test_file.assets"
@@ -47,7 +48,7 @@ def test_writer_create_assets_dir(tmp_path):
     assert assets_dir.is_dir()
 
 
-def test_writer_write_batch_summary(tmp_path):
+def test_writer_write_batch_summary(tmp_path: Path) -> None:
     writer = Writer(tmp_path)
     summaries = [{"a": 1}, {"b": 2}]
     out_path = writer.write_batch_summary(summaries)
@@ -58,7 +59,7 @@ def test_writer_write_batch_summary(tmp_path):
     assert json.loads(lines[1]) == {"b": 2}
 
 
-def test_writer_write_csv(tmp_path):
+def test_writer_write_csv(tmp_path: Path) -> None:
     writer = Writer(tmp_path)
 
     # Empty list should not create a file
@@ -78,7 +79,7 @@ def test_writer_write_csv(tmp_path):
 # --- tests for batch.py ---
 
 
-def test_calculate_md5(tmp_path):
+def test_calculate_md5(tmp_path: Path) -> None:
     f = tmp_path / "file.txt"
     content = b"hello world"
     f.write_bytes(content)
@@ -87,7 +88,7 @@ def test_calculate_md5(tmp_path):
     assert calculate_md5(f) == expected
 
 
-def test_batch_processor_init_default_dir():
+def test_batch_processor_init_default_dir() -> None:
     config = DocvertConfig()
     with patch("docvert.core.batch.Path.cwd") as mock_cwd:
         mock_cwd.return_value = Path("/tmp/cwd")
@@ -95,7 +96,7 @@ def test_batch_processor_init_default_dir():
         assert bp.output_dir == Path("/tmp/cwd")
 
 
-def test_batch_processor_init_custom_dir(tmp_path):
+def test_batch_processor_init_custom_dir(tmp_path: Path) -> None:
     config = DocvertConfig()
     bp = BatchProcessor(config, output_dir=tmp_path)
     assert bp.output_dir == tmp_path
@@ -103,7 +104,7 @@ def test_batch_processor_init_custom_dir(tmp_path):
 
 @patch("docvert.core.batch.DocxParser")
 @patch("docvert.core.batch.PdfParser")
-def test_batch_processor_process_file_docx(MockPdfParser, MockDocxParser, tmp_path):
+def test_batch_processor_process_file_docx(MockPdfParser: Any, MockDocxParser: Any, tmp_path: Path) -> None:
     config = DocvertConfig(cache_by_hash=False)
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -127,7 +128,7 @@ def test_batch_processor_process_file_docx(MockPdfParser, MockDocxParser, tmp_pa
 
 @patch("docvert.core.batch.DocxParser")
 @patch("docvert.core.batch.PdfParser")
-def test_batch_processor_process_file_pdf(MockPdfParser, MockDocxParser, tmp_path):
+def test_batch_processor_process_file_pdf(MockPdfParser: Any, MockDocxParser: Any, tmp_path: Path) -> None:
     config = DocvertConfig(cache_by_hash=False)
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -144,7 +145,7 @@ def test_batch_processor_process_file_pdf(MockPdfParser, MockDocxParser, tmp_pat
     assert res["input_format"] == ".pdf"
 
 
-def test_batch_processor_process_file_unsupported(tmp_path):
+def test_batch_processor_process_file_unsupported(tmp_path: Path) -> None:
     config = DocvertConfig()
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -155,7 +156,7 @@ def test_batch_processor_process_file_unsupported(tmp_path):
         bp.process_file(in_file)
 
 
-def test_batch_processor_process_file_cache_hit(tmp_path):
+def test_batch_processor_process_file_cache_hit(tmp_path: Path) -> None:
     config = DocvertConfig(cache_by_hash=True)
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -176,7 +177,7 @@ def test_batch_processor_process_file_cache_hit(tmp_path):
     assert res == cached_meta
 
 
-def test_batch_processor_process_file_cache_miss_no_md(tmp_path):
+def test_batch_processor_process_file_cache_miss_no_md(tmp_path: Path) -> None:
     config = DocvertConfig(cache_by_hash=True)
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -200,7 +201,7 @@ def test_batch_processor_process_file_cache_miss_no_md(tmp_path):
         assert res["input_format"] == ".docx"
 
 
-def test_batch_processor_process_file_cache_miss_wrong_hash(tmp_path):
+def test_batch_processor_process_file_cache_miss_wrong_hash(tmp_path: Path) -> None:
     config = DocvertConfig(cache_by_hash=True)
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -223,7 +224,7 @@ def test_batch_processor_process_file_cache_miss_wrong_hash(tmp_path):
         assert res["input_format"] == ".docx"
 
 
-def test_batch_processor_process_file_cache_invalid_json(tmp_path):
+def test_batch_processor_process_file_cache_invalid_json(tmp_path: Path) -> None:
     config = DocvertConfig(cache_by_hash=True)
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -245,7 +246,7 @@ def test_batch_processor_process_file_cache_invalid_json(tmp_path):
         assert res["input_format"] == ".docx"
 
 
-def test_batch_processor_process_success_no_warnings(tmp_path):
+def test_batch_processor_process_success_no_warnings(tmp_path: Path) -> None:
     config = DocvertConfig()
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -267,7 +268,7 @@ def test_batch_processor_process_success_no_warnings(tmp_path):
             mock_wcsv.assert_not_called()
 
 
-def test_batch_processor_process_success_with_warnings(tmp_path):
+def test_batch_processor_process_success_with_warnings(tmp_path: Path) -> None:
     config = DocvertConfig()
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -294,7 +295,7 @@ def test_batch_processor_process_success_with_warnings(tmp_path):
             assert mock_wcsv.call_args[0][0] == "warnings.csv"
 
 
-def test_batch_processor_process_failure_continue(tmp_path):
+def test_batch_processor_process_failure_continue(tmp_path: Path) -> None:
     config = DocvertConfig(continue_on_error=True)
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -311,7 +312,7 @@ def test_batch_processor_process_failure_continue(tmp_path):
             assert mock_wcsv.call_args[0][0] == "failures.csv"
 
 
-def test_batch_processor_process_failure_halt(tmp_path):
+def test_batch_processor_process_failure_halt(tmp_path: Path) -> None:
     config = DocvertConfig(continue_on_error=False)
     bp = BatchProcessor(config, output_dir=tmp_path)
 
@@ -325,7 +326,7 @@ def test_batch_processor_process_failure_halt(tmp_path):
             bp.process([file1])
 
 
-def test_writer_write_markdown_string(tmp_path):
+def test_writer_write_markdown_string(tmp_path: Path) -> None:
     """Test that Writer correctly writes a raw markdown string to a file."""
     writer = Writer(tmp_path)
     out_path = writer.write_markdown_string("# Refined Content", "test_file_ref")
@@ -336,8 +337,8 @@ def test_writer_write_markdown_string(tmp_path):
 @patch("docvert.core.batch.DocxParser")
 @patch("docvert.core.batch.LLMRefiner")
 def test_batch_processor_process_file_with_llm_refiner(
-    MockLLMRefiner, MockDocxParser, tmp_path
-):
+    MockLLMRefiner: Any, MockDocxParser: Any, tmp_path: Path
+) -> None:
     """Test that BatchProcessor uses LLMRefiner when configured to do so."""
     mock_refiner_instance = MagicMock()
     mock_refiner_instance.refine_markdown.return_value = "Refined Content"
@@ -346,10 +347,11 @@ def test_batch_processor_process_file_with_llm_refiner(
     mock_parser = MockDocxParser.return_value
 
     class FakeDoc:
-        def __init__(self):
-            self.metadata = {}
+        def __init__(self) -> None:
+            self.metadata: dict[str, Any] = {}
+            self.blocks: list[Any] = []
 
-        def to_markdown(self):
+        def to_markdown(self) -> str:
             return "Raw Content"
 
     doc = FakeDoc()
@@ -359,7 +361,7 @@ def test_batch_processor_process_file_with_llm_refiner(
     test_file.touch()
 
     config = DocvertConfig(
-        input_dir=tmp_path, output_dir=tmp_path, use_llm_refiner=True
+        use_llm_refiner=True
     )
     processor = BatchProcessor(config, output_dir=tmp_path)
 
@@ -378,8 +380,8 @@ def test_batch_processor_process_file_with_llm_refiner(
 @patch("docvert.core.batch.DocxParser")
 @patch.dict("sys.modules", {"docvert.agent.refiner": None})
 def test_batch_processor_process_file_with_llm_refiner_import_error(
-    MockDocxParser, tmp_path
-):
+    MockDocxParser: Any, tmp_path: Path
+) -> None:
     """Test that BatchProcessor falls back gracefully if LLMRefiner is unavailable."""
     # Testing the ImportError fallback
     # We must reload the module to trigger the except ImportError block
@@ -394,10 +396,11 @@ def test_batch_processor_process_file_with_llm_refiner_import_error(
     mock_parser = MockDocxParser2.return_value
 
     class FakeDoc:
-        def __init__(self):
-            self.metadata = {}
+        def __init__(self) -> None:
+            self.metadata: dict[str, Any] = {}
+            self.blocks: list[Any] = []
 
-        def to_markdown(self):
+        def to_markdown(self) -> str:
             return "Raw Content"
 
     doc = FakeDoc()
@@ -407,7 +410,7 @@ def test_batch_processor_process_file_with_llm_refiner_import_error(
     test_file.touch()
 
     config = DocvertConfig(
-        input_dir=tmp_path, output_dir=tmp_path, use_llm_refiner=True
+        use_llm_refiner=True
     )
     processor = docvert.core.batch.BatchProcessor(config, output_dir=tmp_path)
 
