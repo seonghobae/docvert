@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from typing import Any
 import sys
 import pytest
 import runpy
@@ -8,7 +11,7 @@ from docvert.cli.main import main
 
 
 @pytest.fixture
-def temp_workspace(tmp_path):
+def temp_workspace(tmp_path: Path) -> Any:
     d1 = tmp_path / "dir1"
     d1.mkdir()
     f1 = d1 / "file1.txt"
@@ -20,7 +23,7 @@ def temp_workspace(tmp_path):
     return tmp_path, d1, f1, f2
 
 
-def test_no_inputs(capsys):
+def test_no_inputs(capsys: Any) -> None:
     with patch.object(sys, "argv", ["docvert"]):
         with pytest.raises(SystemExit) as excinfo:
             main()
@@ -31,7 +34,7 @@ def test_no_inputs(capsys):
 
 
 @patch("docvert.cli.main.BatchProcessor")
-def test_valid_file_inputs(mock_processor, temp_workspace):
+def test_valid_file_inputs(mock_processor: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
 
     with patch.object(sys, "argv", ["docvert", str(f1), str(f2)]):
@@ -45,7 +48,7 @@ def test_valid_file_inputs(mock_processor, temp_workspace):
 
 
 @patch("docvert.cli.main.BatchProcessor")
-def test_valid_dir_input(mock_processor, temp_workspace):
+def test_valid_dir_input(mock_processor: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
 
     with patch.object(sys, "argv", ["docvert", "--input-dir", str(d1)]):
@@ -58,7 +61,7 @@ def test_valid_dir_input(mock_processor, temp_workspace):
 
 
 @patch("docvert.cli.main.BatchProcessor")
-def test_mixed_inputs_with_deduplication(mock_processor, temp_workspace):
+def test_mixed_inputs_with_deduplication(mock_processor: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
 
     with patch.object(
@@ -73,7 +76,7 @@ def test_mixed_inputs_with_deduplication(mock_processor, temp_workspace):
     assert f2 in args
 
 
-def test_invalid_input_dir(capsys, temp_workspace):
+def test_invalid_input_dir(capsys: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
     invalid_dir = tmp_path / "does_not_exist"
 
@@ -87,7 +90,7 @@ def test_invalid_input_dir(capsys, temp_workspace):
 
 
 @patch("docvert.cli.main.BatchProcessor")
-def test_non_existent_positional_input(mock_processor, capsys, temp_workspace):
+def test_non_existent_positional_input(mock_processor: Any, capsys: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
     invalid_file = tmp_path / "does_not_exist.txt"
 
@@ -100,7 +103,7 @@ def test_non_existent_positional_input(mock_processor, capsys, temp_workspace):
 
 
 @patch("docvert.cli.main.BatchProcessor")
-def test_custom_config(mock_processor, temp_workspace):
+def test_custom_config(mock_processor: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
 
     custom_args = [
@@ -129,7 +132,7 @@ def test_custom_config(mock_processor, temp_workspace):
     assert config.deterministic is False
 
 
-def test_main_execution():
+def test_main_execution() -> None:
     # Temporarily remove the module from sys.modules to avoid runpy RuntimeWarning
     orig_module = sys.modules.pop("docvert.cli.main", None)
     try:
@@ -144,7 +147,7 @@ def test_main_execution():
             sys.modules["docvert.cli.main"] = orig_module
 
 
-def test_fallback_batch_processor(capsys, temp_workspace):
+def test_fallback_batch_processor(capsys: Any, temp_workspace: Any) -> None:
     # Force ImportError for docvert.core.batch
     import docvert.cli.main
 

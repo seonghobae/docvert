@@ -12,10 +12,13 @@ try:
 except ImportError:
     # Stub for BatchProcessor if it's not yet implemented
     class BatchProcessor:  # type: ignore
+        """Stub for BatchProcessor."""
         def __init__(self, config: DocvertConfig):
+            """Initialize stub."""
             self.config = config
 
-        def process(self, files: List[Path]):
+        def process(self, files: List[Path]) -> None:
+            """Process stub."""
             print(f"Stub: Processing {len(files)} files with config:")
             print(self.config.model_dump_json(indent=2))
 

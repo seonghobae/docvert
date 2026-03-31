@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 from loguru import logger
 
-from docvert.models.document import Document, Paragraph, Heading, Table
+from docvert.models.document import Document, Paragraph, Heading, Table, Image
 from docvert.models.config import DocvertConfig
 
 try:
@@ -33,6 +33,11 @@ class PdfParser:
     """
 
     def __init__(self, config: Optional[DocvertConfig] = None):
+        """Initialize the PdfParser.
+
+        Args:
+            config (Optional[DocvertConfig]): Configuration object for parsing options.
+        """
         self.config = config or DocvertConfig()
 
     def parse(self, file_path: str | Path) -> Document:
@@ -107,8 +112,36 @@ class PdfParser:
                     elif item_type == "TableItem":
                         md_table = item.export_to_markdown()  # type: ignore
                         doc.blocks.append(Table(content=md_table, rows=[]))
-                    elif hasattr(item, "text") and item.text:  # type: ignore
-                        doc.blocks.append(Paragraph(content=item.text))  # type: ignore
+                    elif item_type == "PictureItem":
+                        try:
+                            from io import BytesIO
+
+                            pil_image = item.get_image(result.document)  # type: ignore
+                            if pil_image:
+                                buf = BytesIO()
+                                fmt = pil_image.format or "PNG"
+                                pil_image.save(buf, format=fmt)
+
+                                alt_text = (
+                                    item.text
+                                    if hasattr(item, "text") and item.text
+                                    else ""
+                                )
+                                doc.blocks.append(
+                                    Image(
+                                        content=alt_text,
+                                        image_bytes=buf.getvalue(),
+                                        extension=f".{fmt.lower()}",
+                                        alt_text=alt_text,
+                                    )
+                                )
+                                continue
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to extract image from docling PictureItem: {e}"
+                            )
+                    elif hasattr(item, "text") and item.text:
+                        doc.blocks.append(Paragraph(content=item.text))
 
             if not items_found:
                 raise ValueError("No items yielded by iterate_items")
@@ -170,7 +203,7 @@ class PdfParser:
             element_type = getattr(element, "category", type(element).__name__)
             text = str(element).strip()
 
-            if not text:
+            if not text and element_type != "Image":
                 continue
 
             metadata = {"source": "unstructured", "type": element_type}
@@ -185,6 +218,40 @@ class PdfParser:
                 ):
                     metadata["text_as_html"] = element.metadata.text_as_html
                 doc.blocks.append(Table(content=text, metadata=metadata))
+            elif element_type == "Image":
+                image_base64 = None
+                mime_type = "image/png"
+                if hasattr(element, "metadata"):
+                    if (
+                        hasattr(element.metadata, "image_base64")
+                        and element.metadata.image_base64
+                    ):
+                        image_base64 = element.metadata.image_base64
+                    if (
+                        hasattr(element.metadata, "image_mime_type")
+                        and element.metadata.image_mime_type
+                    ):
+                        mime_type = element.metadata.image_mime_type
+
+                if image_base64:
+                    import base64
+
+                    image_bytes = base64.b64decode(image_base64)
+                    ext = ".png"
+                    if mime_type and "/" in mime_type:
+                        ext = f".{mime_type.split('/')[-1]}"
+
+                    doc.blocks.append(
+                        Image(
+                            content=text,
+                            image_bytes=image_bytes,
+                            extension=ext,
+                            alt_text=text,
+                            metadata=metadata,
+                        )
+                    )
+                else:
+                    doc.blocks.append(Paragraph(content=text, metadata=metadata))
             else:
                 doc.blocks.append(Paragraph(content=text, metadata=metadata))
 

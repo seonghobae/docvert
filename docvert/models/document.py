@@ -1,7 +1,7 @@
 """Document structure models for representing parsed content."""
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 @dataclass
@@ -49,6 +49,23 @@ class Table(Block):
 
 
 @dataclass
+class Image(Block):
+    """Class representing an image block in a document.
+
+    Attributes:
+        alt_text (str): Alternative text for the image.
+        extension (Optional[str]): Image file extension (e.g., '.png').
+        image_bytes (Optional[bytes]): Raw image data bytes.
+        filepath (Optional[str]): Relative path where the image is saved.
+    """
+
+    alt_text: str = ""
+    extension: Optional[str] = None
+    image_bytes: Optional[bytes] = None
+    filepath: Optional[str] = None
+
+
+@dataclass
 class Document:
     """Class representing a structured document composed of blocks.
 
@@ -76,4 +93,7 @@ class Document:
                 for row in block.rows:
                     lines.append("| " + " | ".join(row) + " |")
                 lines.append("\n")
+            elif isinstance(block, Image):
+                path = block.filepath or ""
+                lines.append(f"![{block.alt_text}]({path})\n")
         return "\n".join(lines)

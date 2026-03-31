@@ -4,18 +4,18 @@ from docvert.agent.refiner import LLMRefiner
 
 
 @pytest.fixture
-def refiner():
+def refiner() -> LLMRefiner:
     return LLMRefiner(api_key="fake-key")
 
 
-def test_refiner_initialization(refiner):
+def test_refiner_initialization(refiner: LLMRefiner) -> None:
     """Test that the LLMRefiner initializes correctly with an API key."""
     assert refiner.client.api_key == "fake-key"
     assert refiner.model == "gpt-4o-mini"
 
 
 @patch("docvert.agent.refiner.OpenAI")
-def test_refine_markdown_success(mock_openai_class):
+def test_refine_markdown_success(mock_openai_class: MagicMock) -> None:
     """Test that refine_markdown calls the LLM and returns the expected result."""
     # Setup mock
     mock_client = MagicMock()
@@ -39,7 +39,7 @@ def test_refine_markdown_success(mock_openai_class):
 
 
 @pytest.mark.live
-def test_refine_markdown_live():
+def test_refine_markdown_live() -> None:
     """Live test that requires OPENAI_API_KEY environment variable."""
     import os
 
@@ -55,7 +55,7 @@ def test_refine_markdown_live():
     assert len(result) > 0
 
 
-def test_refiner_missing_openai():
+def test_refiner_missing_openai() -> None:
     """Test that ImportError is raised if openai is not available."""
     import sys
     import importlib
@@ -63,7 +63,7 @@ def test_refiner_missing_openai():
 
     # Temporarily remove openai from sys.modules to trigger ImportError
     original_openai = sys.modules.get("openai")
-    sys.modules["openai"] = None
+    sys.modules["openai"] = None  # type: ignore[assignment]
 
     try:
         importlib.reload(docvert.agent.refiner)
@@ -79,7 +79,7 @@ def test_refiner_missing_openai():
 
 
 @patch("docvert.agent.refiner.OpenAI")
-def test_refine_markdown_exception(mock_openai_class):
+def test_refine_markdown_exception(mock_openai_class: MagicMock) -> None:
     """Test that refine_markdown handles exceptions gracefully."""
     mock_client = MagicMock()
     mock_client.chat.completions.create.side_effect = Exception("API error")

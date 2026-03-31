@@ -4,12 +4,13 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import Union, Optional, Dict, Any, Sequence
+from typing import Union, Optional, Dict, Any, Sequence, cast
 
 from docvert.models.config import DocvertConfig
 from docvert.core.writer import Writer
 from docvert.parsers.docx_parser import DocxParser
 from docvert.parsers.pdf_parser import PdfParser
+from docvert.models.document import Image
 
 try:
     from docvert.agent.refiner import LLMRefiner
@@ -46,6 +47,12 @@ class BatchProcessor:
     def __init__(
         self, config: DocvertConfig, output_dir: Optional[Union[str, Path]] = None
     ):
+        """Initialize the BatchProcessor.
+
+        Args:
+            config (DocvertConfig): Configuration options for processing.
+            output_dir (Optional[Union[str, Path]]): Directory to write output files. Defaults to current directory.
+        """
         self.config = config
         if output_dir:
             self.output_dir = Path(output_dir)
@@ -133,7 +140,7 @@ class BatchProcessor:
                         md_path = self.output_dir / f"{stem}.md"
                         if md_path.exists():
                             logger.info(f"Skipping {file_path} (cache hit)")
-                            return cached_meta
+                            return cast(Dict[str, Any], cached_meta)
                 except Exception:
                     pass  # ignore error and proceed
 
@@ -148,6 +155,17 @@ class BatchProcessor:
 
         doc = parser.parse(file_path)
 
+        # Save images
+        assets_dir = self.writer.create_assets_dir(stem)
+        for idx, block in enumerate(doc.blocks):
+            if isinstance(block, Image) and block.image_bytes:
+                img_ext = block.extension or ".png"
+                img_name = f"image_{idx}{img_ext}"
+                img_path = assets_dir / img_name
+                with open(img_path, "wb") as f:
+                    f.write(block.image_bytes)
+                block.filepath = f"{assets_dir.name}/{img_name}"
+
         # Refine markdown if LLM refiner is configured
         if self.config.use_llm_refiner and LLMRefiner is not None:
             raw_markdown = doc.to_markdown()
@@ -158,8 +176,6 @@ class BatchProcessor:
         else:
             output_md_path = self.writer.write_markdown(doc, stem)
             doc.metadata["llm_refined"] = False
-
-        self.writer.create_assets_dir(stem)
 
         metadata = {
             "source_file": str(file_path),

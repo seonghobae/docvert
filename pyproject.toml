@@ -22,6 +22,7 @@ docvert = "docvert.cli.main:main"
 
 [dependency-groups]
 dev = [
+    "interrogate>=1.7.0",
     "mypy>=1.19.1",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
