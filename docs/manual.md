@@ -15,14 +15,17 @@ Every processed document yields:
 
 The Docvert CLI exposes commands to run conversions on single files or process batches of files.
 
-You can run the CLI using standard Python or via environment managers like `uv`.
+You can run the CLI in multiple ways:
 
 ```bash
-# Using standard Python (if installed globally or in an active venv)
-python -m docvert.cli.main [COMMAND] [OPTIONS]
+# Using the installed entry point (after uv sync or pip install)
+docvert [COMMAND] [OPTIONS]
 
-# Using uv
+# Using uv run (recommended during development)
 uv run python -m docvert.cli.main [COMMAND] [OPTIONS]
+
+# Using standard Python module invocation
+python -m docvert.cli.main [COMMAND] [OPTIONS]
 ```
 
 ### Commands

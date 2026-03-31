@@ -15,7 +15,6 @@ WORKDIR /app
 # Copy the project files
 COPY pyproject.toml README.md uv.lock ./
 COPY docvert/ ./docvert/
-COPY main.py ./main.py
 
 # Install dependencies and the project itself using uv
 RUN uv pip install --system .
