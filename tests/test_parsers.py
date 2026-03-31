@@ -6,7 +6,6 @@ from docvert.models.document import Document, Heading, Paragraph, Table
 from docvert.parsers.docx_parser import DocxParser, DocvertConfig
 from docvert.parsers.pdf_parser import PdfParser
 
-
 # --- DOCX Parser Tests ---
 
 
@@ -398,47 +397,53 @@ def test_pdf_parser_docling_fails_unstructured_unavailable(
     with pytest.raises(RuntimeError, match="Both parsers failed or missing"):
         parser.parse(file_path)
 
+
 import sys
 import importlib
+
 
 def test_pdf_parser_import_error_handling():
     # Simulate missing docling and unstructured by temporarily patching sys.modules
     import docvert.parsers.pdf_parser as pdf_parser_module
-    
+
     # Save original __import__
     original_import = __builtins__["__import__"]
-    
+
     def mocked_import(name, *args, **kwargs):
         if name in ("docling.document_converter", "unstructured.partition.pdf"):
             raise ImportError(f"Mocked missing {name}")
         return original_import(name, *args, **kwargs)
-        
+
     with patch("builtins.__import__", side_effect=mocked_import):
         # Reload the module to trigger module-level try-except
         importlib.reload(pdf_parser_module)
-        
+
     assert pdf_parser_module.DOCLING_AVAILABLE is False
     assert pdf_parser_module.UNSTRUCTURED_AVAILABLE is False
-    
+
     # Restore the module state so subsequent tests or usages are not broken
     importlib.reload(pdf_parser_module)
+
 
 def test_pdf_parser_import_success_handling():
     import sys
     import importlib
     import docvert.parsers.pdf_parser as pdf_parser_module
-    
+
     mock_docling = MagicMock()
     mock_unstructured = MagicMock()
-    
-    with patch.dict("sys.modules", {
-        "docling.document_converter": mock_docling,
-        "unstructured.partition.pdf": mock_unstructured,
-    }):
+
+    with patch.dict(
+        "sys.modules",
+        {
+            "docling.document_converter": mock_docling,
+            "unstructured.partition.pdf": mock_unstructured,
+        },
+    ):
         importlib.reload(pdf_parser_module)
-        
+
     assert pdf_parser_module.DOCLING_AVAILABLE is True
     assert pdf_parser_module.UNSTRUCTURED_AVAILABLE is True
-    
+
     # Reload again to restore
     importlib.reload(pdf_parser_module)

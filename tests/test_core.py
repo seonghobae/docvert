@@ -14,8 +14,9 @@ from docvert.core.batch import BatchProcessor, calculate_md5
 
 
 def test_writer_init(tmp_path):
+    """Test that Writer creates the output directory upon initialization."""
     output_dir = tmp_path / "out"
-    writer = Writer(output_dir)
+    Writer(output_dir)
     assert output_dir.exists()
 
 
@@ -322,3 +323,103 @@ def test_batch_processor_process_failure_halt(tmp_path):
 
         with pytest.raises(Exception, match="Boom"):
             bp.process([file1])
+
+
+def test_writer_write_markdown_string(tmp_path):
+    """Test that Writer correctly writes a raw markdown string to a file."""
+    writer = Writer(tmp_path)
+    out_path = writer.write_markdown_string("# Refined Content", "test_file_ref")
+    assert out_path == tmp_path / "test_file_ref.md"
+    assert out_path.read_text(encoding="utf-8") == "# Refined Content"
+
+
+@patch("docvert.core.batch.DocxParser")
+@patch("docvert.core.batch.LLMRefiner")
+def test_batch_processor_process_file_with_llm_refiner(
+    MockLLMRefiner, MockDocxParser, tmp_path
+):
+    """Test that BatchProcessor uses LLMRefiner when configured to do so."""
+    mock_refiner_instance = MagicMock()
+    mock_refiner_instance.refine_markdown.return_value = "Refined Content"
+    MockLLMRefiner.return_value = mock_refiner_instance
+
+    mock_parser = MockDocxParser.return_value
+
+    class FakeDoc:
+        def __init__(self):
+            self.metadata = {}
+
+        def to_markdown(self):
+            return "Raw Content"
+
+    doc = FakeDoc()
+    mock_parser.parse.return_value = doc
+
+    test_file = tmp_path / "test.docx"
+    test_file.touch()
+
+    config = DocvertConfig(
+        input_dir=tmp_path, output_dir=tmp_path, use_llm_refiner=True
+    )
+    processor = BatchProcessor(config, output_dir=tmp_path)
+
+    result = processor.process_file(test_file)
+
+    # check success implicitly via the result keys
+    assert result["llm_refined"] is True
+    MockLLMRefiner.assert_called_once()
+    mock_refiner_instance.refine_markdown.assert_called_once_with("Raw Content")
+
+    output_file = tmp_path / "test.md"
+    assert output_file.exists()
+    assert output_file.read_text(encoding="utf-8") == "Refined Content"
+
+
+@patch("docvert.core.batch.DocxParser")
+@patch.dict("sys.modules", {"docvert.agent.refiner": None})
+def test_batch_processor_process_file_with_llm_refiner_import_error(
+    MockDocxParser, tmp_path
+):
+    """Test that BatchProcessor falls back gracefully if LLMRefiner is unavailable."""
+    # Testing the ImportError fallback
+    # We must reload the module to trigger the except ImportError block
+    import importlib
+    import docvert.core.batch
+
+    importlib.reload(docvert.core.batch)
+
+    # Re-apply the patch because we just reloaded the module
+    patcher = patch("docvert.core.batch.DocxParser")
+    MockDocxParser2 = patcher.start()
+    mock_parser = MockDocxParser2.return_value
+
+    class FakeDoc:
+        def __init__(self):
+            self.metadata = {}
+
+        def to_markdown(self):
+            return "Raw Content"
+
+    doc = FakeDoc()
+    mock_parser.parse.return_value = doc
+
+    test_file = tmp_path / "test.docx"
+    test_file.touch()
+
+    config = DocvertConfig(
+        input_dir=tmp_path, output_dir=tmp_path, use_llm_refiner=True
+    )
+    processor = docvert.core.batch.BatchProcessor(config, output_dir=tmp_path)
+
+    result = processor.process_file(test_file)
+
+    # check success implicitly via the result keys
+    # Should fall back to standard writing
+    assert result["llm_refined"] is False
+
+    output_file = tmp_path / "test.md"
+    assert output_file.exists()
+
+    # Restore the module state
+    importlib.reload(docvert.core.batch)
+    patcher.stop()

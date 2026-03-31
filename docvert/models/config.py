@@ -41,3 +41,6 @@ class DocvertConfig(BaseModel):
     cache_by_hash: bool = True
     deterministic: bool = True
     aggressive_heading_inference: bool = False
+
+    use_llm_refiner: bool = False
+    llm_model: str = "gpt-4o-mini"
