@@ -38,10 +38,15 @@ class DocxParser:
     """
 
     def __init__(self, config: Optional[Any] = None):
-        """Initialize the DocxParser.
+        """Initialize the DocxParser with configuration.
+
+        Stores the configuration used for heading detection heuristics,
+        image extraction mode, and other parsing behaviors.
 
         Args:
-            config: Optional configuration object.
+            config: Optional configuration object controlling parsing
+                behavior (heading mode, image mode, etc.). Defaults to
+                a stub ``DocvertConfig`` if not provided.
         """
         self.config = config or DocvertConfig()
 

@@ -47,11 +47,18 @@ class BatchProcessor:
     def __init__(
         self, config: DocvertConfig, output_dir: Optional[Union[str, Path]] = None
     ):
-        """Initialize the BatchProcessor.
+        """Initialize the BatchProcessor with parsers, writer, and configuration.
+
+        Sets up the output directory, instantiates a ``Writer`` for file I/O,
+        and creates ``DocxParser`` and ``PdfParser`` instances configured with
+        the provided settings.
 
         Args:
-            config (DocvertConfig): Configuration options for processing.
-            output_dir (Optional[Union[str, Path]]): Directory to write output files. Defaults to current directory.
+            config (DocvertConfig): Configuration options controlling parsing
+                behavior, caching, LLM refinement, and error handling.
+            output_dir (Optional[Union[str, Path]]): Directory to write output
+                files (Markdown, sidecar JSON, summaries, CSVs). Defaults to
+                the current working directory if not specified.
         """
         self.config = config
         if output_dir:

@@ -153,8 +153,22 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     """Main entry point for the Docvert command line interface.
 
-    Parses arguments, gathers input files, dedupes them, builds the configuration,
-    and runs the BatchProcessor to convert documents to Markdown.
+    Orchestrates the full CLI workflow:
+
+    1. Parses command-line arguments via ``parse_args()``.
+    2. Resolves input files based on the chosen subcommand:
+       - ``convert``: validates the single input file exists.
+       - ``batch``: recursively collects all files from the input directory.
+    3. Deduplicates files by resolved path while preserving order.
+    4. Builds a ``DocvertConfig`` from parsed arguments, adjusting
+       ``continue_on_error`` (disabled for single-file convert) and
+       ``cache_by_hash`` (only enabled for batch with ``--cache``).
+    5. Instantiates ``BatchProcessor`` and runs conversion.
+
+    Side effects:
+        Calls ``sys.exit(1)`` if no command is given, the input directory
+        does not exist, or no valid input files are found. Writes converted
+        files, sidecar JSON, and batch summary/CSV reports to ``--output-dir``.
     """
     args = parse_args()
 
