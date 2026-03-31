@@ -7,6 +7,27 @@ on:
     branches: [ "master", "main" ]
 
 jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+      - name: Run Ruff (Lint and Format Check)
+        run: uv run ruff check .
+      - name: Run Mypy (Type Check)
+        run: uv run mypy --strict docvert
+      - name: Run Interrogate (Docstring Check)
+        run: uv run interrogate -v -c -I -f 100 docvert
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -21,5 +42,5 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: uv sync --all-extras --dev
-      - name: Run tests with pytest
-        run: PYTHONPATH=. uv run pytest --cov=docvert tests/
+      - name: Run tests with pytest (100% coverage enforced)
+        run: PYTHONPATH=. uv run pytest --cov=docvert --cov-fail-under=100 tests/
