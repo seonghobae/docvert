@@ -1,72 +1,292 @@
-# DocVert 웹 매뉴얼 (설치 및 사용 가이드)
+# DocVert 사용 설명서
 
-DocVert는 복잡한 구조의 PDF 및 DOCX 문서를 읽어 시맨틱(Semantic) 마크다운으로 변환해주는 파이썬 기반 CLI 도구입니다.
-
-이 문서는 **컴퓨터에 개발 환경이 전혀 구축되어 있지 않은 완전 초기 상태**(Homebrew, 패키지 관리자, 파이썬 등 아무것도 없는 상태)를 기준으로, 각 운영체제(OS)별 설치 및 실행 방법을 안내합니다.
+> DocVert는 PDF나 워드(DOCX) 파일을 깔끔한 마크다운(.md) 파일로 변환해주는 도구입니다.
+> 이 문서는 **컴퓨터에 아무것도 설치되어 있지 않은 분**을 위해 작성되었습니다.
 
 ---
 
-## Docker를 이용한 설치 (모든 OS 공통 — 가장 추천)
+## 어떤 설치 방법을 선택해야 하나요?
 
-DocVert는 내부적으로 AI 모델과 C언어 기반의 복잡한 시스템 라이브러리(poppler, tesseract 등)를 사용합니다. 따라서 OS에 직접 설치하는 것보다, **모든 것이 준비된 Docker 이미지를 사용하는 것이 가장 쉽고 안전**합니다.
+아래 표를 보고 본인에게 맞는 방법을 선택하세요.
 
-### 1단계: Docker 설치하기
+| 상황 | 추천 설치 방법 | 난이도 |
+|---|---|---|
+| macOS를 사용하고 있다 | [방법 A: macOS에 직접 설치](#방법-a-macos에-직접-설치) | 쉬움 |
+| Windows를 사용하고 있다 | [방법 B: Windows에 직접 설치](#방법-b-windows에-직접-설치) | 보통 |
+| Linux를 사용하고 있다 | [방법 C: Linux에 직접 설치](#방법-c-linux에-직접-설치) | 쉬움 |
+| 인터넷이 안 되는 폐쇄망이다 | [방법 D: 폐쇄망 설치](#방법-d-폐쇄망air-gapped-환경-설치) | 보통 |
+| Docker를 이미 사용하고 있다 | [방법 E: Docker로 설치](#방법-e-docker로-설치-docker-사용자-전용) | 쉬움 |
 
-각 OS별로 아래 설치 파일을 다운로드하여 설치하세요. **Homebrew나 별도 패키지 관리자가 필요 없습니다.**
+> **참고:** Docker Desktop은 설치 후 항상 백그라운드에서 메모리를 2~4GB 이상 점유합니다. Docker를 이미 사용하지 않는다면 **직접 설치 방법을 추천**합니다.
 
-| OS | 설치 방법 |
-|---|---|
-| **macOS** | [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/) 에서 `.dmg` 파일을 다운로드 → 더블클릭하여 설치 → Applications 폴더로 드래그 → Docker Desktop 실행 |
-| **Windows** | [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) 에서 `.exe` 설치 파일 다운로드 → 실행하여 설치 → 재부팅 후 Docker Desktop 실행 |
-| **Linux (Ubuntu/Debian)** | 아래 명령어를 터미널에 입력하세요 |
+---
 
-**Linux Docker 설치 (apt 이용):**
+## 방법 A: macOS에 직접 설치
+
+Mac을 처음 쓰시는 분도 따라할 수 있도록 하나씩 설명합니다.
+
+### A-1. 터미널 열기
+
+1. `Cmd + Space` 를 눌러 **Spotlight 검색**을 엽니다.
+2. `터미널` 이라고 입력합니다.
+3. **터미널(Terminal)** 앱을 클릭하여 실행합니다.
+
+> 터미널은 컴퓨터에 텍스트 명령어를 입력하는 프로그램입니다.
+> 앞으로 모든 명령어는 이 터미널에 붙여넣기(`Cmd + V`)하면 됩니다.
+
+### A-2. Command Line Tools 설치
+
+터미널에 아래를 붙여넣고 Enter를 누릅니다:
+
 ```bash
-# Docker 공식 GPG 키 추가
-sudo apt update
-sudo apt install -y ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-  -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Docker 공식 저장소 추가
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
-  https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Docker 설치
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io
-
-# 현재 사용자에게 Docker 권한 부여 (재로그인 필요)
-sudo usermod -aG docker $USER
+xcode-select --install
 ```
 
-### 2단계: DocVert Docker 이미지 가져오기
+팝업 창이 뜨면 **'설치'** 버튼을 클릭합니다. 설치가 완료될 때까지 기다리세요 (5~10분 소요).
 
-**방법 A — 온라인 환경 (GitHub Releases에서 다운로드):**
+> 이미 설치되어 있다면 "already installed"라는 메시지가 나옵니다. 그냥 다음 단계로 넘어가세요.
 
-[DocVert GitHub Releases 페이지](https://github.com/seonghobae/docvert/releases)에 접속하여 최신 버전의 분할 파일들(`docvert-offline-release.tar.gz.part-*`)을 모두 다운로드합니다.
+### A-3. Homebrew 설치 (방법 1 — 추천)
+
+Homebrew는 Mac에서 프로그램을 쉽게 설치할 수 있는 도구입니다.
 
 ```bash
-# 분할 파일 합치기
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+설치가 끝나면 화면 마지막에 **`Next steps:`** 라는 안내가 나옵니다. 거기에 나오는 명령어 2줄을 복사해서 실행해야 합니다. 보통 아래와 비슷합니다:
+
+```bash
+echo >> ~/.zprofile
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
+
+> **확인 방법:** `brew --version` 을 입력해서 버전 번호가 나오면 성공입니다.
+
+### A-3 대안. Homebrew 없이 설치하기 (방법 2)
+
+Homebrew를 사용하고 싶지 않다면 [MacPorts](https://www.macports.org/install.php)를 사용할 수 있습니다.
+
+1. [MacPorts 다운로드 페이지](https://www.macports.org/install.php)에서 본인 macOS 버전에 맞는 `.pkg` 파일을 다운로드합니다.
+2. 다운로드한 파일을 더블클릭하여 설치합니다.
+3. 터미널을 완전히 닫았다가 다시 엽니다.
+
+### A-4. 필수 프로그램 설치
+
+**Homebrew를 설치한 경우:**
+```bash
+brew install poppler tesseract libmagic
+```
+
+**MacPorts를 설치한 경우:**
+```bash
+sudo port install poppler tesseract libmagic
+```
+
+> 이 프로그램들은 PDF에서 텍스트를 추출하고, 이미지 속 글자를 인식(OCR)하는 데 필요합니다.
+
+### A-5. uv 설치 (파이썬 패키지 관리자)
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+설치 후 **터미널을 완전히 닫았다가 다시 열어주세요** (반드시!).
+
+> `uv`는 DocVert에 필요한 파이썬 환경을 자동으로 관리해주는 도구입니다.
+> 파이썬을 별도로 설치할 필요가 없습니다. `uv`가 알아서 다운로드합니다.
+
+### A-6. DocVert 다운로드
+
+```bash
+git clone https://github.com/seonghobae/docvert.git
+cd docvert
+uv sync
+```
+
+> `git clone`은 인터넷에서 DocVert 프로그램을 다운로드하는 명령어입니다.
+> `uv sync`는 DocVert가 필요로 하는 모든 라이브러리를 자동으로 설치합니다. 처음에는 몇 분 걸릴 수 있습니다.
+
+### A-7. 설치 확인
+
+```bash
+uv run python -m docvert.cli.main --help
+```
+
+사용 가능한 명령어 목록이 출력되면 설치 성공입니다! [사용 방법](#사용-방법)으로 이동하세요.
+
+---
+
+## 방법 B: Windows에 직접 설치
+
+Windows에서는 **WSL2(Windows Subsystem for Linux)** 를 통해 리눅스 환경을 만들어서 사용합니다.
+
+### B-1. WSL2 설치
+
+1. **시작 메뉴**에서 `PowerShell` 을 검색합니다.
+2. **"관리자 권한으로 실행"** 을 클릭합니다.
+3. 아래 명령어를 붙여넣고 Enter를 누릅니다:
+
+```cmd
+wsl --install
+```
+
+4. 설치가 완료되면 **컴퓨터를 재부팅**합니다.
+5. 재부팅 후 자동으로 Ubuntu 창이 열립니다.
+6. **사용자 이름**과 **비밀번호**를 설정합니다 (비밀번호는 화면에 표시되지 않지만 정상입니다).
+
+> **Windows 10 버전 2004 이상** 또는 **Windows 11**이 필요합니다.
+> 버전 확인: `시작 → 설정 → 시스템 → 정보 → Windows 사양`
+
+### B-2. 필수 프로그램 설치
+
+Ubuntu 터미널에서 아래를 한 줄씩 실행합니다:
+
+```bash
+sudo apt update
+```
+
+비밀번호를 물으면 B-1에서 설정한 비밀번호를 입력합니다.
+
+```bash
+sudo apt install -y poppler-utils tesseract-ocr libmagic-dev curl git
+```
+
+### B-3. uv 설치
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+설치 후 아래를 실행합니다:
+
+```bash
+source $HOME/.local/bin/env
+```
+
+### B-4. DocVert 다운로드
+
+```bash
+git clone https://github.com/seonghobae/docvert.git
+cd docvert
+uv sync
+```
+
+### B-5. 설치 확인
+
+```bash
+uv run python -m docvert.cli.main --help
+```
+
+### B-6. Windows 파일을 변환하고 싶을 때
+
+WSL에서 Windows의 파일에 접근하려면 `/mnt/c/` 경로를 사용합니다.
+
+예를 들어, 바탕화면에 있는 `보고서.pdf`를 변환하려면:
+
+```bash
+uv run python -m docvert.cli.main convert \
+    "/mnt/c/Users/내이름/Desktop/보고서.pdf" \
+    --output-dir ./결과
+```
+
+> `내이름` 부분을 실제 Windows 사용자 이름으로 바꿔주세요.
+> 사용자 이름을 모르면 Windows 탐색기에서 `C:\Users\` 폴더를 열어 확인하세요.
+
+---
+
+## 방법 C: Linux에 직접 설치
+
+### Ubuntu / Debian 계열
+
+```bash
+# 1. 필수 프로그램 설치
+sudo apt update
+sudo apt install -y poppler-utils tesseract-ocr libmagic-dev curl git
+
+# 2. uv 설치
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
+
+# 3. DocVert 다운로드 및 설치
+git clone https://github.com/seonghobae/docvert.git
+cd docvert
+uv sync
+
+# 4. 설치 확인
+uv run python -m docvert.cli.main --help
+```
+
+### Fedora / RHEL / CentOS / Rocky Linux
+
+```bash
+# 1. 필수 프로그램 설치
+sudo dnf install -y poppler-utils tesseract libmagic curl git
+
+# 2. uv 설치
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
+
+# 3. DocVert 다운로드 및 설치
+git clone https://github.com/seonghobae/docvert.git
+cd docvert
+uv sync
+
+# 4. 설치 확인
+uv run python -m docvert.cli.main --help
+```
+
+---
+
+## 방법 D: 폐쇄망(Air-gapped) 환경 설치
+
+인터넷이 차단된 보안망에서 DocVert를 사용하는 방법입니다. Docker(또는 Podman)가 필요합니다.
+
+### 준비물
+
+- 인터넷이 되는 컴퓨터 1대
+- USB 메모리 또는 보안 파일 전송 수단
+- 폐쇄망 컴퓨터에 Docker 또는 Podman이 설치되어 있어야 합니다
+
+### 인터넷이 되는 컴퓨터에서
+
+1. [DocVert GitHub Releases](https://github.com/seonghobae/docvert/releases) 페이지에 접속합니다.
+2. 최신 버전의 **모든 `.part-*` 파일**을 다운로드합니다 (여러 개의 파일로 나뉘어 있습니다).
+3. 다운로드한 파일들을 USB 등으로 폐쇄망 컴퓨터에 옮깁니다.
+
+### 폐쇄망 컴퓨터에서
+
+```bash
+# 1. 다운로드한 파일들이 있는 폴더로 이동
+cd /path/to/downloaded/files
+
+# 2. 분할 파일 합치기
 cat docvert-offline-release.tar.gz.part-* > docvert-offline-release.tar.gz
 
-# 압축 해제
+# 3. 압축 해제
 tar -xzvf docvert-offline-release.tar.gz
 cd docvert-offline-release
 
-# Docker 이미지 로드
+# 4. Docker 이미지 설치
 docker load -i docvert-offline.tar.gz
 
-# 이미지 확인
+# 5. 설치 확인
 docker images | grep docvert
 ```
 
-**방법 B — 소스에서 직접 빌드:**
+> `docvert   offline` 이라는 줄이 보이면 성공입니다.
+
+사용법은 [Docker로 사용하기](#docker로-사용하기) 섹션을 참고하세요.
+
+---
+
+## 방법 E: Docker로 설치 (Docker 사용자 전용)
+
+> **주의:** Docker Desktop은 설치 후 항상 백그라운드에서 **메모리를 2~4GB 이상 점유**합니다.
+> Docker를 이미 사용하고 있지 않다면, 위의 직접 설치 방법(방법 A, B, C)을 추천합니다.
+
+Docker가 이미 설치되어 있다면:
 
 ```bash
 git clone https://github.com/seonghobae/docvert.git
@@ -74,394 +294,144 @@ cd docvert
 docker build -t docvert:offline .
 ```
 
-### 3단계: 변환 실행하기
-
-```bash
-# 단일 파일 변환
-docker run --rm \
-    -v $(pwd):/data \
-    docvert:offline convert /data/input.pdf --output-dir /data/out
-
-# 폴더 내 모든 파일 일괄 변환
-docker run --rm \
-    -v $(pwd)/my_docs:/data/my_docs \
-    -v $(pwd)/out:/data/out \
-    docvert:offline batch /data/my_docs --output-dir /data/out
-```
-
-> **Windows PowerShell 사용 시:** `$(pwd)` 대신 `${PWD}` 를 사용하세요.
->
-> **Windows CMD 사용 시:** `$(pwd)` 대신 `%cd%` 를 사용하세요.
-
 ---
 
-## 폐쇄망(Air-gapped) 환경 설치
+## 사용 방법
 
-인터넷이 차단된 폐쇄망(보안망) 환경에서 DocVert를 사용하는 방법입니다.
+설치를 마쳤다면 이제 문서를 변환할 수 있습니다!
 
-### 준비 (인터넷이 되는 컴퓨터에서)
+### PDF 파일 하나 변환하기
 
-1. [DocVert GitHub Releases](https://github.com/seonghobae/docvert/releases)에서 최신 릴리즈의 모든 `.part-*` 파일을 다운로드합니다.
-2. 다운로드한 파일들을 USB, CD, 보안 파일 전송 등을 통해 폐쇄망 내부 컴퓨터로 옮깁니다.
-
-### 설치 (폐쇄망 컴퓨터에서)
-
-**전제 조건:** 폐쇄망 컴퓨터에 Docker(또는 Podman)가 설치되어 있어야 합니다.
+변환할 파일이 있는 폴더에서 터미널을 열고:
 
 ```bash
-# 1. 분할 파일 합치기
-cat docvert-offline-release.tar.gz.part-* > docvert-offline-release.tar.gz
-
-# 2. 압축 해제
-tar -xzvf docvert-offline-release.tar.gz
-cd docvert-offline-release
-
-# 3. Docker 이미지 로드
-docker load -i docvert-offline.tar.gz
-
-# 4. 이미지 확인
-docker images | grep docvert
+uv run python -m docvert.cli.main convert ./내문서.pdf --output-dir ./결과
 ```
 
-### 실행
+> **뜻 풀이:**
+>
+> - `convert` — "변환해라"
+> - `./내문서.pdf` — 변환할 파일 경로
+> - `--output-dir ./결과` — 결과를 저장할 폴더 (없으면 자동 생성)
+
+### 워드(DOCX) 파일 변환하기
 
 ```bash
-# 단일 파일 변환
-docker run --rm -v $(pwd):/data \
-    docvert:offline convert /data/document.pdf --output-dir /data/out
+uv run python -m docvert.cli.main convert ./보고서.docx --output-dir ./결과
+```
+
+### 폴더 안의 모든 파일 한꺼번에 변환하기
+
+```bash
+uv run python -m docvert.cli.main batch ./문서폴더 --output-dir ./결과폴더
+```
+
+> `batch`는 지정한 폴더 안에 있는 모든 PDF, DOCX 파일을 자동으로 찾아서 변환합니다.
+
+### 변환 결과물 확인
+
+변환이 완료되면 결과 폴더에 파일마다 3가지가 생깁니다:
+
+| 파일 | 설명 |
+|---|---|
+| `파일이름.md` | 변환된 마크다운 파일 (텍스트 편집기로 열 수 있음) |
+| `파일이름.conversion.json` | 변환 정보 (어떤 파서가 사용되었는지, 경고사항 등) |
+| `파일이름.assets/` | 문서에 포함된 이미지가 저장된 폴더 |
+
+### Docker로 사용하기
+
+Docker를 사용하는 경우 명령어가 조금 다릅니다:
+
+```bash
+# 현재 폴더의 파일을 변환
+docker run --rm -v "$(pwd)":/data docvert:offline convert /data/내문서.pdf --output-dir /data/결과
 
 # 폴더 일괄 변환
-docker run --rm \
-    -v $(pwd)/input:/data/input \
-    -v $(pwd)/output:/data/output \
-    docvert:offline batch /data/input --output-dir /data/output
+docker run --rm -v "$(pwd)":/data docvert:offline batch /data/문서폴더 --output-dir /data/결과폴더
 ```
 
-> **참고:** Podman을 사용하는 환경에서는 `docker` 대신 `podman`을 입력하세요.
-
-### 업데이트
-
-새 버전이 나오면 Releases 페이지에서 새 `.part-*` 파일을 받아 같은 과정을 반복하면 됩니다. 기존 이미지는 자동으로 교체됩니다.
+> **Windows PowerShell:** `$(pwd)` 대신 `${PWD}` 를 사용하세요.
 
 ---
 
-## macOS 직접 설치 (Homebrew 없이)
+## 고급: LLM으로 결과 교정하기 (선택사항)
 
-**Homebrew를 사용하지 않고** macOS에 직접 설치하는 방법입니다. 터미널(Terminal.app)을 열고 순서대로 진행하세요.
+AI를 이용해서 변환 결과를 더 깔끔하게 다듬을 수 있습니다. 이 기능은 선택사항이며, 사용하려면 API 키가 필요합니다.
 
-### 1단계: Command Line Tools 설치
-
-```bash
-xcode-select --install
-```
-
-팝업이 뜨면 **'설치'** 를 클릭하고 완료될 때까지 기다립니다. (이미 설치되어 있다면 건너뛰세요.)
-
-### 2단계: 시스템 라이브러리 설치 (MacPorts 이용)
-
-Homebrew 대신 [MacPorts](https://www.macports.org/install.php)를 사용합니다.
-
-**MacPorts 설치:**
-
-1. [MacPorts 다운로드 페이지](https://www.macports.org/install.php)에서 본인의 macOS 버전에 맞는 `.pkg` 설치 파일을 다운로드합니다.
-2. 다운로드한 `.pkg` 파일을 더블클릭하여 설치합니다.
-3. 터미널을 완전히 닫았다가 다시 열어 PATH가 적용되도록 합니다.
-
-**필수 라이브러리 설치:**
+### OpenAI 사용 시
 
 ```bash
-sudo port install poppler tesseract libmagic
+# 1. API 키 설정 (https://platform.openai.com/api-keys 에서 발급)
+export OPENAI_API_KEY="sk-여러분의키를여기에붙여넣으세요"
+
+# 2. LLM 교정을 켜고 변환
+uv run python -m docvert.cli.main convert ./내문서.pdf --output-dir ./결과 --llm-refiner
 ```
 
-### 3단계: 파이썬 패키지 관리자 `uv` 설치
+### 로컬 AI (Ollama) 사용 시 — 인터넷 없이 가능
+
+[Ollama](https://ollama.com/)를 설치하면 인터넷 없이도 AI 교정을 사용할 수 있습니다.
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# 1. Ollama 설치 후 모델 다운로드 (한 번만)
+ollama pull llama3
+
+# 2. 환경변수 설정
+export OPENAI_API_KEY="dummy"
+export OPENAI_BASE_URL="http://localhost:11434/v1"
+
+# 3. LLM 교정 실행
+uv run python -m docvert.cli.main convert ./내문서.pdf --output-dir ./결과 --llm-refiner
 ```
-
-설치 후 터미널을 완전히 닫았다가 다시 열어주세요.
-
-### 4단계: DocVert 다운로드 및 설치
-
-```bash
-git clone https://github.com/seonghobae/docvert.git
-cd docvert
-uv sync
-```
-
-### 5단계: 설치 확인
-
-```bash
-uv run python -m docvert.cli.main --help
-```
-
-> **대안: Conda를 이용한 설치**
->
-> MacPorts 대신 [Miniconda](https://docs.anaconda.com/miniconda/install/)를 사용할 수도 있습니다.
->
-> ```bash
-> # Miniconda 설치 (웹에서 .pkg 다운로드하거나 아래 명령어)
-> curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -o miniconda.sh
-> bash miniconda.sh -b -p $HOME/miniconda
-> eval "$($HOME/miniconda/bin/conda shell.bash hook)"
->
-> # 필수 시스템 라이브러리 설치
-> conda install -c conda-forge poppler tesseract libmagic
->
-> # 이후 uv 설치 및 DocVert 설치는 동일
-> ```
 
 ---
 
-## Windows 직접 설치
+## 자주 묻는 질문 (FAQ)
 
-Windows에서는 시스템 라이브러리 호환성 문제로 **WSL2(Windows Subsystem for Linux)** 사용을 강력히 권장합니다.
+### Q: "command not found: uv" 라고 나와요
 
-### 1단계: WSL2 및 Ubuntu 설치
-
-시작 메뉴에서 **PowerShell** 또는 **명령 프롬프트(cmd)** 를 찾아 **관리자 권한으로 실행**합니다.
-
-```cmd
-wsl --install
-```
-
-설치 후 컴퓨터를 **재부팅**합니다. 재부팅 후 자동으로 Ubuntu 창이 열리면 사용자 이름과 비밀번호를 설정합니다.
-
-> **참고:** Windows 10 버전 2004 이상 또는 Windows 11이 필요합니다. 이전 버전은 [수동 설치 가이드](https://learn.microsoft.com/ko-kr/windows/wsl/install-manual)를 참고하세요.
-
-### 2단계: 필수 시스템 라이브러리 설치
-
-Ubuntu 터미널(WSL)에서 아래 명령어를 입력합니다.
-
-```bash
-sudo apt update
-sudo apt install -y poppler-utils tesseract-ocr libmagic-dev curl git
-```
-
-### 3단계: 파이썬 패키지 관리자 `uv` 설치
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-설치 후 아래 명령어를 실행하거나 터미널을 재시작합니다.
+터미널을 완전히 닫았다가 다시 여세요. 그래도 안 되면:
 
 ```bash
 source $HOME/.local/bin/env
 ```
 
-### 4단계: DocVert 다운로드 및 설치
+### Q: "pdfinfo not found" 라고 나와요
 
-```bash
-git clone https://github.com/seonghobae/docvert.git
-cd docvert
-uv sync
-```
+PDF 관련 프로그램이 설치되지 않은 것입니다:
 
-### 5단계: 설치 확인
-
-```bash
-uv run python -m docvert.cli.main --help
-```
-
-### Windows 파일 접근 팁
-
-WSL에서 Windows 파일에 접근하려면 `/mnt/c/` 경로를 사용합니다.
-
-```bash
-# 예: 바탕화면의 파일 변환
-uv run python -m docvert.cli.main convert \
-    "/mnt/c/Users/사용자이름/Desktop/document.pdf" \
-    --output-dir ./results
-```
-
----
-
-## Linux (Ubuntu/Debian) 직접 설치
-
-### 1단계: 필수 시스템 라이브러리 설치
-
-```bash
-sudo apt update
-sudo apt install -y poppler-utils tesseract-ocr libmagic-dev curl git
-```
-
-### 2단계: 파이썬 패키지 관리자 `uv` 설치
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-설치 후 터미널을 재시작해 적용합니다.
-
-### 3단계: DocVert 다운로드 및 설치
-
-```bash
-git clone https://github.com/seonghobae/docvert.git
-cd docvert
-uv sync
-```
-
-### 4단계: 설치 확인
-
-```bash
-uv run python -m docvert.cli.main --help
-```
-
----
-
-## Linux (RHEL/CentOS/Fedora) 직접 설치
-
-### 1단계: 필수 시스템 라이브러리 설치
-
-**Fedora:**
-```bash
-sudo dnf install -y poppler-utils tesseract libmagic curl git
-```
-
-**RHEL / CentOS / Rocky Linux / AlmaLinux:**
-```bash
-sudo dnf install -y epel-release
-sudo dnf install -y poppler-utils tesseract libmagic curl git
-```
-
-### 2단계: 파이썬 패키지 관리자 `uv` 설치
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-설치 후 터미널을 재시작합니다.
-
-### 3단계: DocVert 다운로드 및 설치
-
-```bash
-git clone https://github.com/seonghobae/docvert.git
-cd docvert
-uv sync
-```
-
-### 4단계: 설치 확인
-
-```bash
-uv run python -m docvert.cli.main --help
-```
-
----
-
-## 사용 방법 (기본 명령어)
-
-직접 설치를 마쳤다면 `uv run python -m docvert.cli.main` 명령어로 DocVert를 실행할 수 있습니다.
-
-### 단일 파일 변환
-
-```bash
-uv run python -m docvert.cli.main convert ./sample.pdf --output-dir ./results
-```
-
-### 폴더 내 모든 파일 일괄 변환 (배치 처리)
-
-```bash
-uv run python -m docvert.cli.main batch ./my_documents --output-dir ./processed_docs
-```
-
-### 배치 처리 옵션
-
-```bash
-# 오류가 발생해도 계속 진행 + 캐시 사용
-uv run python -m docvert.cli.main batch ./my_documents \
-    --output-dir ./processed_docs \
-    --continue-on-error \
-    --cache
-```
-
-### 출력 결과물
-
-변환 후 각 파일마다 3가지가 생성됩니다:
-
-| 파일 | 설명 |
-|---|---|
-| `document.md` | 변환된 마크다운 파일 |
-| `document.conversion.json` | 변환 메타데이터 (파서 정보, 신뢰도 점수, 경고사항 등) |
-| `document.assets/` | 추출된 이미지 등 에셋 폴더 |
-
----
-
-## LLM 교정 기능 설정
-
-DocVert는 `litellm`을 기반으로 다양한 LLM 제공자를 지원합니다. LLM을 이용하면 변환된 마크다운을 더 깔끔하게 교정할 수 있습니다.
-
-### OpenAI 사용
-
-```bash
-export OPENAI_API_KEY="여러분의-api-키"
-uv run python -m docvert.cli.main convert ./sample.pdf --llm-refiner
-```
-
-### Vertex AI (Google Cloud) 사용
-
-```bash
-export VERTEX_PROJECT="여러분의-google-project"
-export VERTEX_LOCATION="us-central1"
-# gcloud auth application-default login 으로 인증 필요
-uv run python -m docvert.cli.main convert ./sample.pdf --llm-refiner
-```
-
-### 로컬 LLM (Ollama 등) 사용
-
-인터넷 없이도 로컬에서 LLM 교정을 사용할 수 있습니다.
-
-```bash
-export OPENAI_API_KEY="dummy"
-export OPENAI_BASE_URL="http://localhost:11434/v1"
-uv run python -m docvert.cli.main convert ./sample.pdf --llm-refiner
-```
-
-자세한 LLM 설정 방법은 [litellm 공식 문서](https://docs.litellm.ai/)를 참고하세요.
-
----
-
-## 문제 해결
-
-### `poppler` 관련 오류
-
-```
-pdfinfo not found. Install poppler-utils.
-```
-
+- **macOS (Homebrew):** `brew install poppler`
 - **macOS (MacPorts):** `sudo port install poppler`
-- **macOS (Conda):** `conda install -c conda-forge poppler`
 - **Ubuntu/Debian:** `sudo apt install -y poppler-utils`
-- **Fedora:** `sudo dnf install -y poppler-utils`
-- **Docker:** Docker 이미지에는 이미 포함되어 있습니다.
+- **Fedora/RHEL:** `sudo dnf install -y poppler-utils`
 
-### `tesseract` 관련 오류
+### Q: "tesseract is not installed" 라고 나와요
 
-```
-tesseract is not installed or not in PATH
-```
+OCR 프로그램이 설치되지 않은 것입니다:
 
+- **macOS (Homebrew):** `brew install tesseract`
 - **macOS (MacPorts):** `sudo port install tesseract`
-- **macOS (Conda):** `conda install -c conda-forge tesseract`
 - **Ubuntu/Debian:** `sudo apt install -y tesseract-ocr`
-- **Fedora:** `sudo dnf install -y tesseract`
+- **Fedora/RHEL:** `sudo dnf install -y tesseract`
 
-### Python 버전 문제
+### Q: 파이썬을 별도로 설치해야 하나요?
 
-DocVert는 Python 3.14 이상이 필요합니다. `uv`가 자동으로 적절한 Python 버전을 관리합니다.
+아니요. `uv`가 필요한 파이썬 버전을 자동으로 다운로드하고 관리합니다. 별도로 파이썬을 설치할 필요가 없습니다.
+
+### Q: WSL이 뭔가요?
+
+WSL(Windows Subsystem for Linux)은 Windows 안에서 리눅스를 사용할 수 있게 해주는 기능입니다. 별도의 가상머신 없이 Windows 안에서 바로 리눅스 명령어를 사용할 수 있습니다.
+
+### Q: 변환 결과의 품질이 아쉬워요
+
+`--llm-refiner` 옵션을 사용하면 AI가 결과를 교정해줍니다. [LLM으로 결과 교정하기](#고급-llm으로-결과-교정하기-선택사항) 섹션을 참고하세요.
+
+### Q: 업데이트는 어떻게 하나요?
+
+DocVert가 설치된 폴더에서:
 
 ```bash
-# uv가 관리하는 Python 버전 확인
-uv python list
+cd docvert
+git pull
+uv sync
 ```
-
-### WSL2 관련 (Windows)
-
-WSL이 설치되지 않는 경우, Windows 기능에서 **"Linux용 Windows 하위 시스템"** 과 **"가상 머신 플랫폼"** 이 활성화되어 있는지 확인하세요.
-
-```cmd
-dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-```
-
-이후 재부팅 후 `wsl --install` 을 다시 시도하세요.
