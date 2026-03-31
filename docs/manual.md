@@ -59,6 +59,32 @@ Process a directory of DOCX and/or PDF files, with built-in caching.
 python -m docvert.cli.main batch ./company_docs --output-dir ./processed_docs --continue-on-error --cache
 ```
 
+## LLM Configuration
+
+Docvert uses `litellm` under the hood for its `--llm-refiner` feature. This allows you to use almost any LLM provider natively without changing the codebase.
+
+By default, it uses `gpt-4o-mini` via OpenAI. 
+
+**Using OpenAI:**
+```bash
+export OPENAI_API_KEY="your-api-key"
+```
+
+**Using Vertex AI:**
+```bash
+export VERTEX_PROJECT="your-google-project"
+export VERTEX_LOCATION="us-central1"
+# Ensure you are authenticated via gcloud auth application-default login
+```
+
+**Using Local Models (e.g. Ollama):**
+```bash
+export OPENAI_API_KEY="dummy"
+export OPENAI_BASE_URL="http://localhost:11434/v1"
+```
+
+You can pass the appropriate environment variables corresponding to the provider you wish to use as per the [litellm documentation](https://docs.litellm.ai/).
+
 ## Sidecar JSON Structure
 
 Alongside every `output.md`, Docvert generates an `output.conversion.json` sidecar. This provides programmatic insight into the parsing quality:
