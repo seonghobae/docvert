@@ -1,3 +1,5 @@
+"""Document writer module for saving converted content and metadata."""
+
 import json
 import csv
 from pathlib import Path

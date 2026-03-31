@@ -1,3 +1,5 @@
+"""Batch processing module for handling multiple document conversions."""
+
 import hashlib
 import json
 import logging

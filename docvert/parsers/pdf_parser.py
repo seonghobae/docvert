@@ -1,3 +1,5 @@
+"""PDF document parser module."""
+
 from pathlib import Path
 from typing import Optional, Any
 from loguru import logger
