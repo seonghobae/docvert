@@ -30,28 +30,14 @@ def test_no_inputs(capsys: Any) -> None:
         assert excinfo.value.code == 1
 
     captured = capsys.readouterr()
-    assert "Error: No valid input files provided." in captured.err
+    assert "No command provided" in captured.err
 
 
 @patch("docvert.cli.main.BatchProcessor")
 def test_valid_file_inputs(mock_processor: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
 
-    with patch.object(sys, "argv", ["docvert", str(f1), str(f2)]):
-        main()
-
-    mock_processor.return_value.process.assert_called_once()
-    args = mock_processor.return_value.process.call_args[0][0]
-    assert len(args) == 2
-    assert f1 in args
-    assert f2 in args
-
-
-@patch("docvert.cli.main.BatchProcessor")
-def test_valid_dir_input(mock_processor: Any, temp_workspace: Any) -> None:
-    tmp_path, d1, f1, f2 = temp_workspace
-
-    with patch.object(sys, "argv", ["docvert", "--input-dir", str(d1)]):
+    with patch.object(sys, "argv", ["docvert", "convert", str(f1)]):
         main()
 
     mock_processor.return_value.process.assert_called_once()
@@ -61,12 +47,23 @@ def test_valid_dir_input(mock_processor: Any, temp_workspace: Any) -> None:
 
 
 @patch("docvert.cli.main.BatchProcessor")
-def test_mixed_inputs_with_deduplication(mock_processor: Any, temp_workspace: Any) -> None:
+def test_valid_dir_input(mock_processor: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
 
-    with patch.object(
-        sys, "argv", ["docvert", str(f1), str(d1), "--input-dir", str(tmp_path)]
-    ):
+    with patch.object(sys, "argv", ["docvert", "batch", str(d1)]):
+        main()
+
+    mock_processor.return_value.process.assert_called_once()
+    args = mock_processor.return_value.process.call_args[0][0]
+    assert len(args) == 1
+    assert f1 in args
+
+
+@patch("docvert.cli.main.BatchProcessor")
+def test_batch_dir_input_nested(mock_processor: Any, temp_workspace: Any) -> None:
+    tmp_path, d1, f1, f2 = temp_workspace
+
+    with patch.object(sys, "argv", ["docvert", "batch", str(tmp_path)]):
         main()
 
     mock_processor.return_value.process.assert_called_once()
@@ -80,7 +77,7 @@ def test_invalid_input_dir(capsys: Any, temp_workspace: Any) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
     invalid_dir = tmp_path / "does_not_exist"
 
-    with patch.object(sys, "argv", ["docvert", "--input-dir", str(invalid_dir)]):
+    with patch.object(sys, "argv", ["docvert", "batch", str(invalid_dir)]):
         with pytest.raises(SystemExit) as excinfo:
             main()
         assert excinfo.value.code == 1
@@ -90,16 +87,19 @@ def test_invalid_input_dir(capsys: Any, temp_workspace: Any) -> None:
 
 
 @patch("docvert.cli.main.BatchProcessor")
-def test_non_existent_positional_input(mock_processor: Any, capsys: Any, temp_workspace: Any) -> None:
+def test_non_existent_positional_input(
+    mock_processor: Any, capsys: Any, temp_workspace: Any
+) -> None:
     tmp_path, d1, f1, f2 = temp_workspace
     invalid_file = tmp_path / "does_not_exist.txt"
 
-    with patch.object(sys, "argv", ["docvert", str(invalid_file), str(f1)]):
-        main()
+    with patch.object(sys, "argv", ["docvert", "convert", str(invalid_file)]):
+        with pytest.raises(SystemExit) as excinfo:
+            main()
+        assert excinfo.value.code == 1
 
     captured = capsys.readouterr()
-    assert "does not exist." in captured.err
-    mock_processor.return_value.process.assert_called_once()
+    assert "does not exist" in captured.err
 
 
 @patch("docvert.cli.main.BatchProcessor")
@@ -108,6 +108,7 @@ def test_custom_config(mock_processor: Any, temp_workspace: Any) -> None:
 
     custom_args = [
         "docvert",
+        "convert",
         str(f1),
         "--language-hint",
         "en",
@@ -116,8 +117,10 @@ def test_custom_config(mock_processor: Any, temp_workspace: Any) -> None:
         "fr",
         "--heading-mode",
         "heuristic",
-        "--no-continue-on-error",
         "--no-deterministic",
+        "--llm-refiner",
+        "--llm-model",
+        "gpt-4",
     ]
 
     with patch.object(sys, "argv", custom_args):
@@ -128,8 +131,9 @@ def test_custom_config(mock_processor: Any, temp_workspace: Any) -> None:
     assert config.language_hint == "en"
     assert config.ocr_languages == ["en", "fr"]
     assert config.heading_mode == "heuristic"
-    assert config.continue_on_error is False
     assert config.deterministic is False
+    assert config.use_llm_refiner is True
+    assert config.llm_model == "gpt-4"
 
 
 def test_main_execution() -> None:
@@ -155,7 +159,7 @@ def test_fallback_batch_processor(capsys: Any, temp_workspace: Any) -> None:
         importlib.reload(docvert.cli.main)
 
         tmp_path, d1, f1, f2 = temp_workspace
-        with patch.object(sys, "argv", ["docvert", str(f1)]):
+        with patch.object(sys, "argv", ["docvert", "convert", str(f1)]):
             docvert.cli.main.main()
 
         captured = capsys.readouterr()
