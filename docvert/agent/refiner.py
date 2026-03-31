@@ -8,7 +8,7 @@ try:
     from litellm import completion
     import litellm
 except ImportError:
-    completion = None  # type: ignore
+    completion = None
 
 
 class LLMRefiner:
