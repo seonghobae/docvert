@@ -229,7 +229,7 @@ class DocxParser:
         # 2. Outline level (often 0 for body text, 1-9 for headings in word)
         # Using a simplified check, if outline_level is 0, it's body text (or top level depending on Word version)
         if p.style and hasattr(p.style, "paragraph_format"):
-            outline_level = p.style.paragraph_format.outline_level
+            outline_level = getattr(p.style.paragraph_format, "outline_level", None)
             # In docx, NO_OUTLINE_LEVEL is usually 9 (for some versions) or None. Let's do a basic check
             if outline_level is not None and outline_level < 9:
                 score += 50
