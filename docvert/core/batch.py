@@ -14,7 +14,7 @@ from docvert.parsers.pdf_parser import PdfParser
 try:
     from docvert.agent.refiner import LLMRefiner
 except ImportError:
-    LLMRefiner = None
+    LLMRefiner = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ class BatchProcessor:
         if ext == ".docx":
             parser = self.docx_parser
         elif ext == ".pdf":
-            parser = self.pdf_parser
+            parser = self.pdf_parser  # type: ignore
         else:
             raise ValueError(f"Unsupported file extension: {ext}")
 
@@ -149,7 +149,7 @@ class BatchProcessor:
         doc = parser.parse(file_path)
 
         # Refine markdown if LLM refiner is configured
-        if self.config.use_llm_refiner and LLMRefiner:
+        if self.config.use_llm_refiner and LLMRefiner is not None:
             raw_markdown = doc.to_markdown()
             refiner = LLMRefiner(model=self.config.llm_model)
             refined_markdown = refiner.refine_markdown(raw_markdown)

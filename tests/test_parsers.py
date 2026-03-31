@@ -1,9 +1,9 @@
 import pytest
-from pathlib import Path
+import importlib
 from unittest.mock import MagicMock, patch, mock_open
 
 from docvert.models.document import Document, Heading, Paragraph, Table
-from docvert.parsers.docx_parser import DocxParser, DocvertConfig
+from docvert.parsers.docx_parser import DocxParser
 from docvert.parsers.pdf_parser import PdfParser
 
 # --- DOCX Parser Tests ---
@@ -398,10 +398,6 @@ def test_pdf_parser_docling_fails_unstructured_unavailable(
         parser.parse(file_path)
 
 
-import sys
-import importlib
-
-
 def test_pdf_parser_import_error_handling():
     # Simulate missing docling and unstructured by temporarily patching sys.modules
     import docvert.parsers.pdf_parser as pdf_parser_module
@@ -426,8 +422,6 @@ def test_pdf_parser_import_error_handling():
 
 
 def test_pdf_parser_import_success_handling():
-    import sys
-    import importlib
     import docvert.parsers.pdf_parser as pdf_parser_module
 
     mock_docling = MagicMock()

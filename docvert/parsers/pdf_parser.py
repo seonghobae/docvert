@@ -1,7 +1,7 @@
 """PDF document parser module."""
 
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
 from loguru import logger
 
 from docvert.models.document import Document, Paragraph, Heading, Table
@@ -100,15 +100,15 @@ class PdfParser:
                         label = getattr(item, "label", "text")
                         if str(label) in ("title", "section_header"):
                             doc.blocks.append(
-                                Heading(content=item.text, level=1, score=100)
+                                Heading(content=item.text, level=1, score=100)  # type: ignore
                             )
                         else:
-                            doc.blocks.append(Paragraph(content=item.text))
+                            doc.blocks.append(Paragraph(content=item.text))  # type: ignore
                     elif item_type == "TableItem":
-                        md_table = item.export_to_markdown()
+                        md_table = item.export_to_markdown()  # type: ignore
                         doc.blocks.append(Table(content=md_table, rows=[]))
-                    elif hasattr(item, "text") and item.text:
-                        doc.blocks.append(Paragraph(content=item.text))
+                    elif hasattr(item, "text") and item.text:  # type: ignore
+                        doc.blocks.append(Paragraph(content=item.text))  # type: ignore
 
             if not items_found:
                 raise ValueError("No items yielded by iterate_items")

@@ -1,12 +1,13 @@
 """LLM-powered markdown refinement module."""
 
 import os
+from typing import Optional, Any
 from loguru import logger
 
 try:
     from openai import OpenAI
 except ImportError:
-    OpenAI = None
+    OpenAI = None  # type: ignore
 
 
 class LLMRefiner:
@@ -17,7 +18,7 @@ class LLMRefiner:
         model (str): The model to use for refinement.
     """
 
-    def __init__(self, api_key: str = None, model: str = "gpt-4o-mini"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
         """Initializes the LLMRefiner.
 
         Args:
