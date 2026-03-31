@@ -122,7 +122,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """Main entry point for the Docvert command line interface.
 
     Parses arguments, gathers input files, dedupes them, builds the configuration,

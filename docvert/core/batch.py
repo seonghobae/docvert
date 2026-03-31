@@ -4,7 +4,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import List, Union, Optional, Dict, Any
+from typing import Union, Optional, Dict, Any, Sequence
 
 from docvert.models.config import DocvertConfig
 from docvert.core.writer import Writer
@@ -56,7 +56,7 @@ class BatchProcessor:
         self.docx_parser = DocxParser(config=self.config)
         self.pdf_parser = PdfParser(config=self.config)
 
-    def process(self, input_paths: List[Union[str, Path]]) -> None:
+    def process(self, input_paths: Sequence[Union[str, Path]]) -> None:
         """Processes a list of files, writing outputs and summaries to the output directory.
 
         Args:

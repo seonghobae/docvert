@@ -130,9 +130,18 @@ def test_custom_config(mock_processor, temp_workspace):
 
 
 def test_main_execution():
-    with patch.object(sys, "argv", ["docvert"]), pytest.raises(SystemExit) as excinfo:
-        runpy.run_module("docvert.cli.main", run_name="__main__")
-    assert excinfo.value.code == 1
+    # Temporarily remove the module from sys.modules to avoid runpy RuntimeWarning
+    orig_module = sys.modules.pop("docvert.cli.main", None)
+    try:
+        with (
+            patch.object(sys, "argv", ["docvert"]),
+            pytest.raises(SystemExit) as excinfo,
+        ):
+            runpy.run_module("docvert.cli.main", run_name="__main__")
+        assert excinfo.value.code == 1
+    finally:
+        if orig_module:
+            sys.modules["docvert.cli.main"] = orig_module
 
 
 def test_fallback_batch_processor(capsys, temp_workspace):
