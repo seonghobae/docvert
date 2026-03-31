@@ -1,0 +1,9 @@
+site_name: DocVert Manual
+site_description: Documentation for DocVert
+theme:
+  name: material
+  language: ko
+nav:
+  - Home: index.md
+  - 영문 매뉴얼: manual.md
+  - 한글 매뉴얼: web-manual-ko.md

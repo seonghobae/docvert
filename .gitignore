@@ -10,3 +10,4 @@ test*.pdf
 .coverage
 failures.csv
 coverage.xml
+site/
