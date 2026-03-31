@@ -44,7 +44,7 @@ class LLMRefiner:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.base_url = base_url or os.getenv("OPENAI_BASE_URL")
         self.model = model
-        
+
         # Suppress verbose litellm logging if desired
         litellm.suppress_debug_info = True
 

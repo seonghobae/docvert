@@ -19,7 +19,12 @@ class Block:
 
 @dataclass
 class Paragraph(Block):
-    """Class representing a paragraph block in a document."""
+    """A paragraph block representing a unit of body text in a document.
+
+    Inherits content and metadata from Block without additional attributes.
+    In the rendering pipeline, paragraphs are emitted as plain text lines
+    separated by blank lines in Markdown output.
+    """
 
     pass
 
@@ -79,6 +84,16 @@ class Document:
 
     def to_markdown(self) -> str:
         """Converts the document's blocks into a Markdown string representation.
+
+        Iterates through each block and renders it according to its type:
+
+        - **Heading**: Rendered as ``# ... ######`` with the appropriate level prefix.
+        - **Paragraph**: Rendered as plain text.
+        - **Table**: Rendered as a pipe-delimited Markdown table (no header separator row).
+        - **Image**: Rendered as ``![alt](filepath)`` using the block's filepath or empty string.
+
+        Each block is followed by a blank line. Blocks are joined with newlines to
+        produce the final Markdown string.
 
         Returns:
             str: The Markdown formatted string of the document content.

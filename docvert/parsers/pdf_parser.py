@@ -33,10 +33,15 @@ class PdfParser:
     """
 
     def __init__(self, config: Optional[DocvertConfig] = None):
-        """Initialize the PdfParser.
+        """Initialize the PdfParser with configuration.
+
+        Stores the configuration used for OCR language selection, reading
+        order mode, and other PDF-specific parsing behaviors.
 
         Args:
-            config (Optional[DocvertConfig]): Configuration object for parsing options.
+            config (Optional[DocvertConfig]): Configuration object controlling
+                parsing behavior (OCR languages, reading order, etc.). Defaults
+                to a fresh ``DocvertConfig`` with default values if not provided.
         """
         self.config = config or DocvertConfig()
 
