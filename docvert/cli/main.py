@@ -19,6 +19,11 @@ except ImportError:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parses command line arguments for the Docvert CLI.
+
+    Returns:
+        argparse.Namespace: The parsed arguments.
+    """
     parser = argparse.ArgumentParser(
         description="Docvert: Convert documents to Markdown."
     )
@@ -103,6 +108,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main():
+    """Main entry point for the Docvert command line interface.
+
+    Parses arguments, gathers input files, dedupes them, builds the configuration,
+    and runs the BatchProcessor to convert documents to Markdown.
+    """
     args = parse_args()
 
     # Gather inputs

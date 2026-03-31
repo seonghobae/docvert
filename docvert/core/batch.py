@@ -13,6 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_md5(file_path: Path) -> str:
+    """Calculates the MD5 hash of a file.
+
+    Args:
+        file_path (Path): Path to the file.
+
+    Returns:
+        str: The hexadecimal MD5 hash of the file.
+    """
     hasher = hashlib.md5()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -21,6 +29,13 @@ def calculate_md5(file_path: Path) -> str:
 
 
 class BatchProcessor:
+    """Processes multiple document files in a batch.
+
+    Args:
+        config (DocvertConfig): Configuration options for processing.
+        output_dir (Optional[Union[str, Path]]): Directory to write output files. Defaults to current directory.
+    """
+
     def __init__(
         self, config: DocvertConfig, output_dir: Optional[Union[str, Path]] = None
     ):
@@ -35,6 +50,14 @@ class BatchProcessor:
         self.pdf_parser = PdfParser(config=self.config)
 
     def process(self, input_paths: List[Union[str, Path]]) -> None:
+        """Processes a list of files, writing outputs and summaries to the output directory.
+
+        Args:
+            input_paths (List[Union[str, Path]]): List of file paths to process.
+
+        Raises:
+            Exception: If `continue_on_error` is false and processing a file fails.
+        """
         summaries = []
         failures = []
         warnings = []
@@ -73,6 +96,19 @@ class BatchProcessor:
             self.writer.write_csv("warnings.csv", ["source_file", "warning"], warnings)
 
     def process_file(self, file_path: Union[str, Path]) -> Dict[str, Any]:
+        """Processes a single document file.
+
+        Parses the document, writes the resulting Markdown and sidecar JSON, and handles caching.
+
+        Args:
+            file_path (Union[str, Path]): Path to the file to process.
+
+        Returns:
+            Dict[str, Any]: Metadata and summary of the file processing.
+
+        Raises:
+            ValueError: If the file extension is not supported.
+        """
         file_path = Path(file_path)
         stem = file_path.stem
         ext = file_path.suffix.lower()

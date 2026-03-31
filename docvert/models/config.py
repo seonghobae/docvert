@@ -3,6 +3,26 @@ from pydantic import BaseModel, Field
 
 
 class DocvertConfig(BaseModel):
+    """Configuration model for Docvert document processing.
+
+    Attributes:
+        language_hint (Literal["ko", "en", "auto"]): Primary language hint for the document.
+        ocr_languages (List[str]): Languages to be used when OCR is performed.
+        heading_mode (Literal["auto", "style_only", "heuristic"]): Strategy for identifying headings.
+        comment_mode (Literal["preserve", "appendix", "inline", "drop"]): Strategy for handling document comments.
+        footnote_mode (Literal["preserve", "appendix", "inline"]): Strategy for handling footnotes.
+        image_mode (Literal["extract_link", "embed", "extract_with_ocr", "skip"]): Strategy for handling images.
+        table_mode (Literal["markdown_preferred", "html_for_complex"]): Formatting preference for tables.
+        pdf_reading_order_mode (Literal["auto", "layout_strict", "ocr_fallback"]): Reading order strategy for PDFs.
+        include_headers_footers (bool): Whether to include headers and footers from the document.
+        normalize_heading_levels (bool): Whether to normalize heading levels (e.g. h1, h2, etc.) to start from h1.
+        preserve_numbering (bool): Whether to keep numbering for lists and headings.
+        continue_on_error (bool): Whether to continue processing if a non-fatal error occurs.
+        cache_by_hash (bool): Whether to cache processing results using document hash.
+        deterministic (bool): Whether processing results should be deterministic.
+        aggressive_heading_inference (bool): Whether to aggressively infer headings based on styling.
+    """
+
     language_hint: Literal["ko", "en", "auto"] = "auto"
     ocr_languages: List[str] = Field(default_factory=lambda: ["ko", "en"])
     heading_mode: Literal["auto", "style_only", "heuristic"] = "auto"

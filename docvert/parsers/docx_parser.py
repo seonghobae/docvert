@@ -20,15 +20,37 @@ logger = logging.getLogger(__name__)
 
 
 class DocvertConfig:
-    # A stub for the config class in case it doesn't exist yet
+    """A stub for the config class in case it doesn't exist yet."""
+
     pass
 
 
 class DocxParser:
+    """Parser for Microsoft Word (.docx) files.
+
+    Extracts paragraphs, headings, and tables using python-docx with a fallback to mammoth.
+
+    Args:
+        config (Optional[Any]): Configuration object. Defaults to an empty DocvertConfig.
+    """
+
     def __init__(self, config: Optional[Any] = None):
         self.config = config or DocvertConfig()
 
     def parse(self, file_path: str | Path) -> Document:
+        """Parses a DOCX file into a Document object.
+
+        Attempts to use python-docx first. If it fails, falls back to mammoth.
+
+        Args:
+            file_path (str | Path): Path to the DOCX file.
+
+        Returns:
+            Document: The parsed document structure.
+
+        Raises:
+            FileNotFoundError: If the specified file does not exist.
+        """
         file_path = Path(file_path)
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -40,6 +62,14 @@ class DocxParser:
             return self._parse_with_mammoth(file_path)
 
     def _parse_with_python_docx(self, file_path: Path) -> Document:
+        """Parses a DOCX file using python-docx.
+
+        Args:
+            file_path (Path): Path to the DOCX file.
+
+        Returns:
+            Document: The parsed document.
+        """
         doc: _Document = docx.Document(file_path)
         docvert_doc = Document()
 
@@ -60,6 +90,16 @@ class DocxParser:
         return docvert_doc
 
     def _process_paragraph(self, p: Paragraph) -> Block:
+        """Processes a python-docx Paragraph into a Docvert Block.
+
+        Determines if the paragraph is a heading or normal text based on styling and heuristics.
+
+        Args:
+            p (Paragraph): The python-docx paragraph element.
+
+        Returns:
+            Block: The corresponding Docvert block (Heading or Paragraph).
+        """
         score, level = self._calculate_heading_score(p)
         text = p.text.strip()
 
@@ -75,12 +115,16 @@ class DocxParser:
             return DocvertParagraph(content=text, metadata=metadata)
 
     def _calculate_heading_score(self, p: Paragraph) -> tuple[int, int]:
-        """
-        Heuristics to determine if a paragraph is a heading.
-        Returns: (score, candidate_level)
-        score >= 85 -> heading
-        score 70-84 -> warning, maybe heading
-        score < 70 -> regular paragraph
+        """Heuristics to determine if a paragraph is a heading.
+
+        Args:
+            p (Paragraph): The python-docx paragraph element.
+
+        Returns:
+            tuple[int, int]: A tuple containing the confidence score (0-100) and candidate heading level.
+                score >= 85 -> heading
+                score 70-84 -> warning, maybe heading
+                score < 70 -> regular paragraph
         """
         score = 0
         level = 1
@@ -129,6 +173,14 @@ class DocxParser:
         return score, level
 
     def _process_table(self, table: Table) -> DocvertTable:
+        """Processes a python-docx Table into a Docvert Table block.
+
+        Args:
+            table (Table): The python-docx table element.
+
+        Returns:
+            DocvertTable: The parsed table block.
+        """
         rows_data = []
         for row in table.rows:
             row_data = [cell.text.strip().replace("\n", " ") for cell in row.cells]
@@ -136,8 +188,13 @@ class DocxParser:
         return DocvertTable(content="", rows=rows_data)
 
     def _parse_with_mammoth(self, file_path: Path) -> Document:
-        """
-        Fallback using mammoth.
+        """Fallback method using mammoth to parse DOCX to Markdown, then to a Document.
+
+        Args:
+            file_path (Path): Path to the DOCX file.
+
+        Returns:
+            Document: The parsed document structure.
         """
         with open(file_path, "rb") as docx_file:
             result = mammoth.convert_to_markdown(docx_file)
