@@ -11,6 +11,7 @@
   - Produces a sidecar `.json` file containing extraction confidence scores, metadata, and parsing warnings.
   - Automatically extracts and saves images referenced in the source documents.
 - **Batch Processing & Caching**: Efficiently process large directories of files with built-in caching to avoid redundant parsing.
+- **Provider-Agnostic LLM Refinement**: Uses `litellm` under the hood, natively supporting OpenAI, Vertex AI, Anthropic, Bedrock, and local models via Ollama. Just set the appropriate environment variables (e.g. `OPENAI_API_KEY`, `VERTEX_PROJECT`).
 - **Developer Ready**: 
   - 100% test coverage.
   - Robust type hints powered by `pydantic`.
