@@ -12,6 +12,14 @@ def test_refiner_initialization(refiner: LLMRefiner) -> None:
     """Test that the LLMRefiner initializes correctly with an API key."""
     assert refiner.client.api_key == "fake-key"
     assert refiner.model == "gpt-4o-mini"
+    assert refiner.base_url is None
+
+
+def test_refiner_initialization_with_base_url() -> None:
+    """Test that the LLMRefiner initializes correctly with a custom base URL."""
+    refiner = LLMRefiner(api_key="fake-key", base_url="http://localhost:11434/v1")
+    assert refiner.client.api_key == "fake-key"
+    assert refiner.base_url == "http://localhost:11434/v1"
 
 
 @patch("docvert.agent.refiner.OpenAI")
