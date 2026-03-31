@@ -1,55 +1,90 @@
 # DocVert User Guide
 
-> DocVert converts PDF and Word (DOCX) files into clean Markdown (.md) files.
-> This guide is written for **complete beginners** — no prior setup required.
+## What is DocVert?
+
+Imagine you have a PDF report or a Word (DOCX) file from work. DocVert extracts the content and converts it into a clean **text file** that preserves the document structure (headings, tables, lists).
+
+The output is saved as **Markdown (.md)** — a simple text format you can open with any text editor (Notepad, TextEdit, VS Code, etc.).
+
+**When is DocVert useful?**
+
+- PDF text is garbled when you try to copy-paste it
+- You need to convert Word files into a format other systems can use
+- You have many documents to convert at once
 
 ---
 
-## Which installation method should I use?
+## Before You Start
 
-| Your situation | Recommended method | Difficulty |
+### What is a "Terminal"?
+
+It's a program where you type commands as text instead of clicking buttons. Don't worry — you'll just **copy and paste** the commands from this guide. Almost no typing required.
+
+### How to copy and paste
+
+| OS | Copy | Paste |
 |---|---|---|
-| I use a Mac | [Method A: Install on macOS](#method-a-install-on-macos) | Easy |
-| I use Windows | [Method B: Install on Windows](#method-b-install-on-windows) | Medium |
-| I use Linux | [Method C: Install on Linux](#method-c-install-on-linux) | Easy |
-| No internet (air-gapped) | [Method D: Offline Installation](#method-d-offline-air-gapped-installation) | Medium |
-| I already have Docker | [Method E: Docker Installation](#method-e-docker-installation-for-docker-users) | Easy |
+| Mac | `Cmd + C` | `Cmd + V` |
+| Windows (WSL terminal) | Select text to auto-copy | Right-click |
+| Linux | `Ctrl + Shift + C` | `Ctrl + Shift + V` |
 
-> **Note about Docker Desktop:** Docker Desktop uses **2-4GB+ of RAM** in the background at all times.
-> If you don't already use Docker, we recommend the **native installation methods** (A, B, or C) instead.
+> **Important:** In a terminal, `Ctrl + C` does NOT copy — it stops the running program!
+> On Linux/WSL, always use `Ctrl + Shift + C` to copy.
+
+### After pasting a command
+
+Press **Enter** to run it.
+
+### When asked for a password
+
+Some commands start with `sudo`, which asks for your password. When you type the password, **nothing shows on screen** — no dots, no asterisks. This is normal. Just type it and press Enter.
 
 ---
 
-## Method A: Install on macOS
+## Which installation method?
 
-### A-1. Open Terminal
+| Your computer | Go to |
+|---|---|
+| **Mac** | [Mac Installation](#mac-installation) |
+| **Windows** | [Windows Installation](#windows-installation) |
+| **Linux** | [Linux Installation](#linux-installation) |
+| **No internet** (air-gapped) | [Offline Installation](#offline-installation) |
 
-1. Press `Cmd + Space` to open **Spotlight Search**.
-2. Type `Terminal` and press Enter.
+---
 
-> Terminal is a program where you type text commands. You'll paste all commands below into this window using `Cmd + V`.
+## Mac Installation
 
-### A-2. Install Command Line Tools
+### Step 1: Open Terminal
 
-Paste this into Terminal and press Enter:
+1. Press `Cmd + Space` (a search bar appears in the center of the screen).
+2. Type `Terminal`.
+3. Click on **Terminal** in the results.
+
+> A window with a blinking cursor on a dark (or white) background opens. This is where you'll paste all commands.
+
+### Step 2: Install Developer Tools
+
+Paste this and press Enter:
 
 ```bash
 xcode-select --install
 ```
 
-Click **"Install"** in the popup. Wait for it to finish (5-10 minutes).
+**What happens:** A popup appears. Click **"Install"** and wait 5-10 minutes.
 
-> If you see "already installed", that's fine — skip to the next step.
+**If it says "already installed":** That's fine. Move to the next step.
 
-### A-3. Install Homebrew (Recommended)
+### Step 3: Install Homebrew
 
-Homebrew makes it easy to install programs on Mac.
+Homebrew is a tool that makes it easy to install programs on Mac.
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-After installation, follow the **"Next steps"** shown at the bottom of the output. Usually something like:
+**What happens:** Installation progress is shown. It may ask for your Mac login password.
+
+**After it finishes:** You'll see `==> Next steps:` at the bottom. **You must** copy and run the commands shown there. They usually look like:
 
 ```bash
 echo >> ~/.zprofile
@@ -57,105 +92,134 @@ echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
 eval "$(/opt/homebrew/bin/brew shellenv)"
 ```
 
-> **Verify:** Type `brew --version` — if you see a version number, it worked.
+**Verify it worked:**
 
-### A-3 Alternative: Install without Homebrew (MacPorts)
+```bash
+brew --version
+```
 
-If you prefer not to use Homebrew, install [MacPorts](https://www.macports.org/install.php):
+If you see `Homebrew 4.x.x`, it's working.
 
-1. Download the `.pkg` installer for your macOS version.
-2. Double-click to install.
-3. Close and reopen Terminal.
+### Step 4: Install Required Programs
 
-### A-4. Install Required Programs
-
-**If you installed Homebrew:**
 ```bash
 brew install poppler tesseract libmagic
 ```
 
-**If you installed MacPorts:**
-```bash
-sudo port install poppler tesseract libmagic
-```
+**What happens:** Programs are downloaded and installed (1-3 minutes).
 
-> These programs extract text from PDFs and perform OCR (text recognition on images).
+> **What are these?**
+>
+> - `poppler` — extracts text from PDF files
+> - `tesseract` — reads text from images (OCR)
+> - `libmagic` — detects file types automatically
 
-### A-5. Install uv (Package Manager)
+### Step 5: Install uv
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-**Close Terminal completely and reopen it** (required!).
+**After this, close Terminal completely and reopen it** (required!).
 
-> `uv` automatically manages the Python environment for DocVert.
-> You do NOT need to install Python separately — `uv` handles it.
+> **What is uv?** It automatically installs and manages the Python environment DocVert needs. You do NOT need to install Python yourself.
 
-### A-6. Download DocVert
+### Step 6: Download DocVert
 
 ```bash
 git clone https://github.com/seonghobae/docvert.git
+```
+
+**What you see:**
+
+```
+Cloning into 'docvert'...
+remote: Enumerating objects: ...
+Receiving objects: 100% ...
+```
+
+Now enter the downloaded folder:
+
+```bash
 cd docvert
+```
+
+> **What does `cd` mean?** "Change directory" — it moves you into the `docvert` folder.
+
+Install the required libraries:
+
+```bash
 uv sync
 ```
 
-> `git clone` downloads DocVert from the internet.
-> `uv sync` installs all required libraries (may take a few minutes the first time).
+**What happens:** Libraries are downloaded (2-5 minutes the first time).
 
-### A-7. Verify Installation
+### Step 7: Verify Installation
 
 ```bash
 uv run python -m docvert.cli.main --help
 ```
 
-If you see a list of commands, installation is complete! Go to [How to Use DocVert](#how-to-use-docvert).
+**If successful, you see:**
+
+```
+usage: python3 -m docvert.cli.main [-h] {convert,batch} ...
+
+Docvert: Convert documents to Markdown.
+```
+
+Installation complete! Go to [How to Use DocVert](#how-to-use-docvert).
 
 ---
 
-## Method B: Install on Windows
+## Windows Installation
 
-Windows uses **WSL2 (Windows Subsystem for Linux)** to create a Linux environment.
+On Windows, you first install **WSL** (Windows Subsystem for Linux) — an official Microsoft feature that lets you run Linux inside Windows.
 
-### B-1. Install WSL2
+### Step 1: Install WSL
 
-1. Click **Start Menu** and search for `PowerShell`.
-2. Click **"Run as Administrator"**.
-3. Paste this command and press Enter:
+1. Click the **Start button** (bottom-left corner).
+2. Type `PowerShell`.
+3. **Right-click** on "Windows PowerShell" → **"Run as Administrator"**.
+4. Click **"Yes"** when asked to allow changes.
+5. In the blue PowerShell window, paste this and press Enter:
 
 ```cmd
 wsl --install
 ```
 
-4. **Restart your computer** when prompted.
-5. After restart, an Ubuntu window opens automatically.
-6. Set a **username** and **password** (the password won't show as you type — this is normal).
+6. **Restart your computer** when prompted.
 
-> Requires **Windows 10 version 2004+** or **Windows 11**.
-> Check: Start → Settings → System → About → Windows specifications
+**After restart:** An Ubuntu window opens automatically. Set up:
 
-### B-2. Install Required Programs
+- **Username:** Type any lowercase name (e.g., `myname`)
+- **Password:** Type any password. **Nothing shows on screen — that's normal.** Type it and press Enter. Type it again to confirm.
 
-In the Ubuntu terminal, run each command one at a time:
+> Requires **Windows 10 (version 2004+)** or **Windows 11**.
+> Check: Start → Settings → System → About → "Windows specifications"
+
+### Step 2: Install Required Programs
+
+In the Ubuntu terminal (black window):
 
 ```bash
 sudo apt update
 ```
 
-Enter the password you set in B-1 when asked.
+Enter the password you set in Step 1 (nothing shows — normal).
 
 ```bash
 sudo apt install -y poppler-utils tesseract-ocr libmagic-dev curl git
 ```
 
-### B-3. Install uv
+### Step 3: Install uv
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source $HOME/.local/bin/env
 ```
 
-### B-4. Download DocVert
+### Step 4: Download DocVert
 
 ```bash
 git clone https://github.com/seonghobae/docvert.git
@@ -163,121 +227,98 @@ cd docvert
 uv sync
 ```
 
-### B-5. Verify Installation
+### Step 5: Verify
 
 ```bash
 uv run python -m docvert.cli.main --help
 ```
 
-### B-6. Converting Windows Files
+If you see the help text, go to [How to Use DocVert](#how-to-use-docvert).
 
-To access files on your Windows desktop from WSL:
+### Finding Your Windows Files from WSL
 
-```bash
-uv run python -m docvert.cli.main convert \
-    "/mnt/c/Users/YourName/Desktop/report.pdf" \
-    --output-dir ./results
-```
+| Windows path | WSL path |
+|---|---|
+| `C:\Users\John\Desktop\` | `/mnt/c/Users/John/Desktop/` |
+| `C:\Users\John\Documents\` | `/mnt/c/Users/John/Documents/` |
+| `D:\Work\` | `/mnt/d/Work/` |
 
-> Replace `YourName` with your actual Windows username.
-> Find it by opening File Explorer and looking at `C:\Users\`.
+> Don't know your username? Open File Explorer and look at `C:\Users\`.
 
 ---
 
-## Method C: Install on Linux
+## Linux Installation
 
 ### Ubuntu / Debian
 
 ```bash
-# 1. Install required programs
 sudo apt update
 sudo apt install -y poppler-utils tesseract-ocr libmagic-dev curl git
-
-# 2. Install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-source $HOME/.local/bin/env
-
-# 3. Download and install DocVert
-git clone https://github.com/seonghobae/docvert.git
-cd docvert
-uv sync
-
-# 4. Verify
-uv run python -m docvert.cli.main --help
 ```
-
-### Fedora / RHEL / CentOS / Rocky Linux
 
 ```bash
-# 1. Install required programs
-sudo dnf install -y poppler-utils tesseract libmagic curl git
-
-# 2. Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source $HOME/.local/bin/env
+```
 
-# 3. Download and install DocVert
+```bash
 git clone https://github.com/seonghobae/docvert.git
 cd docvert
 uv sync
-
-# 4. Verify
-uv run python -m docvert.cli.main --help
 ```
+
+Verify: `uv run python -m docvert.cli.main --help`
+
+### Fedora / RHEL / CentOS
+
+```bash
+sudo dnf install -y poppler-utils tesseract libmagic curl git
+```
+
+Then same as Ubuntu (`curl ... uv` → `git clone ...` → `uv sync`).
 
 ---
 
-## Method D: Offline (Air-Gapped) Installation
+## Offline Installation
 
-For secure networks with no internet access. Requires Docker or Podman.
+For secure networks with no internet access. Requires Docker or Podman on the target machine.
 
 ### What you need
 
-- One computer WITH internet access
-- A USB drive or secure file transfer method
-- Docker or Podman installed on the air-gapped machine
+- One computer WITH internet
+- USB drive (4GB+ recommended)
+- Docker or Podman on the air-gapped machine
 
 ### On the internet-connected computer
 
-1. Go to [DocVert GitHub Releases](https://github.com/seonghobae/docvert/releases).
-2. Download ALL `.part-*` files from the latest release.
-3. Transfer them to the air-gapped machine via USB.
+1. Open [https://github.com/seonghobae/docvert/releases](https://github.com/seonghobae/docvert/releases) in a browser.
+2. Find the latest version at the top.
+3. Download ALL files named `docvert-offline-release.tar.gz.part-aa`, `part-ab`, `part-ac`, etc.
+4. Copy them to a USB drive.
 
 ### On the air-gapped machine
 
 ```bash
-# Navigate to the folder with downloaded files
-cd /path/to/downloaded/files
+# Go to where the files are
+cd /path/to/usb/files
 
-# Combine the split files
+# Combine split files into one
 cat docvert-offline-release.tar.gz.part-* > docvert-offline-release.tar.gz
 
 # Extract
 tar -xzvf docvert-offline-release.tar.gz
 cd docvert-offline-release
 
-# Load into Docker
+# Install into Docker
 docker load -i docvert-offline.tar.gz
-
-# Verify
-docker images | grep docvert
 ```
 
-> If you see `docvert   offline`, the installation succeeded.
+**Verify:** `docker images | grep docvert` — if you see `docvert`, it worked!
 
-See [Using with Docker](#using-with-docker) for how to run it.
-
----
-
-## Method E: Docker Installation (for Docker users)
-
-> **Warning:** Docker Desktop uses **2-4GB+ of RAM** in the background.
-> Only use this method if you already have Docker installed.
+### Using it offline
 
 ```bash
-git clone https://github.com/seonghobae/docvert.git
-cd docvert
-docker build -t docvert:offline .
+docker run --rm -v "$(pwd)":/data docvert:offline convert /data/report.pdf --output-dir /data/results
 ```
 
 ---
@@ -286,20 +327,42 @@ docker build -t docvert:offline .
 
 ### Convert a single PDF file
 
+**Scenario:** You have `report.pdf` on your Desktop and want to convert it.
+
+**On Mac:**
+
 ```bash
-uv run python -m docvert.cli.main convert ./myfile.pdf --output-dir ./results
+cd ~/Desktop
+uv run python -m docvert.cli.main convert ./report.pdf --output-dir ./results
+```
+
+**On Windows (WSL):**
+
+```bash
+cd /mnt/c/Users/YourName/Desktop
+uv run python -m docvert.cli.main convert ./report.pdf --output-dir ./results
 ```
 
 > **What each part means:**
 >
-> - `convert` — the command to convert a file
-> - `./myfile.pdf` — path to the file you want to convert
-> - `--output-dir ./results` — folder where results will be saved (created automatically)
+> | Part | Meaning |
+> |---|---|
+> | `uv run python -m docvert.cli.main` | Run the DocVert program |
+> | `convert` | "Convert one file" |
+> | `./report.pdf` | The file to convert |
+> | `--output-dir ./results` | Where to save the output (auto-created) |
+
+**If successful:**
+
+```
+Processing 1 files...
+Processed 1 files. Failures: 0. Warnings: 0
+```
 
 ### Convert a Word (DOCX) file
 
 ```bash
-uv run python -m docvert.cli.main convert ./report.docx --output-dir ./results
+uv run python -m docvert.cli.main convert ./meeting-notes.docx --output-dir ./results
 ```
 
 ### Convert all files in a folder
@@ -308,102 +371,63 @@ uv run python -m docvert.cli.main convert ./report.docx --output-dir ./results
 uv run python -m docvert.cli.main batch ./my_documents --output-dir ./results
 ```
 
-> `batch` automatically finds and converts all PDF and DOCX files in the folder.
+> `batch` automatically finds and converts ALL PDF and DOCX files in the folder, including subfolders.
 
 ### What you get after conversion
 
-Each file produces 3 outputs:
-
-| File | Description |
-|---|---|
-| `filename.md` | The converted Markdown file (open with any text editor) |
-| `filename.conversion.json` | Conversion metadata (parser used, warnings, etc.) |
-| `filename.assets/` | Folder containing extracted images |
-
-### Using with Docker
-
-If you installed via Docker:
-
-```bash
-# Convert a file in the current folder
-docker run --rm -v "$(pwd)":/data docvert:offline convert /data/myfile.pdf --output-dir /data/results
-
-# Convert all files in a folder
-docker run --rm -v "$(pwd)":/data docvert:offline batch /data/documents --output-dir /data/results
 ```
-
-> **Windows PowerShell:** Use `${PWD}` instead of `$(pwd)`.
-
----
-
-## Advanced: AI-Powered Refinement (Optional)
-
-Use AI to polish the conversion results. Requires an API key.
-
-### Using OpenAI
-
-```bash
-# Set your API key (get one at https://platform.openai.com/api-keys)
-export OPENAI_API_KEY="sk-paste-your-key-here"
-
-# Convert with AI refinement
-uv run python -m docvert.cli.main convert ./myfile.pdf --output-dir ./results --llm-refiner
-```
-
-### Using local AI (Ollama) — works offline
-
-Install [Ollama](https://ollama.com/), then:
-
-```bash
-# Download a model (one-time)
-ollama pull llama3
-
-# Set environment variables
-export OPENAI_API_KEY="dummy"
-export OPENAI_BASE_URL="http://localhost:11434/v1"
-
-# Convert with AI refinement
-uv run python -m docvert.cli.main convert ./myfile.pdf --output-dir ./results --llm-refiner
+results/
+├── report.md              ← converted text file (open with any text editor)
+├── report.conversion.json ← conversion details (parser used, warnings)
+└── report.assets/         ← images extracted from the document
+    ├── image_0.png
+    └── image_1.png
 ```
 
 ---
 
-## FAQ
+## Troubleshooting
 
-### Q: "command not found: uv"
+### "command not found: uv"
 
-Close Terminal completely and reopen it. If that doesn't work:
+Close Terminal completely and reopen. If that doesn't work:
 
 ```bash
 source $HOME/.local/bin/env
 ```
 
-### Q: "pdfinfo not found"
+### "command not found: git"
 
-The PDF extraction tool is missing:
+- **Mac:** Run `xcode-select --install` again
+- **Ubuntu/Debian:** `sudo apt install -y git`
+- **Fedora/RHEL:** `sudo dnf install -y git`
 
-- **macOS (Homebrew):** `brew install poppler`
-- **macOS (MacPorts):** `sudo port install poppler`
+### "pdfinfo not found"
+
+- **Mac:** `brew install poppler`
 - **Ubuntu/Debian:** `sudo apt install -y poppler-utils`
-- **Fedora/RHEL:** `sudo dnf install -y poppler-utils`
 
-### Q: "tesseract is not installed"
+### "tesseract is not installed"
 
-The OCR tool is missing:
-
-- **macOS (Homebrew):** `brew install tesseract`
-- **macOS (MacPorts):** `sudo port install tesseract`
+- **Mac:** `brew install tesseract`
 - **Ubuntu/Debian:** `sudo apt install -y tesseract-ocr`
-- **Fedora/RHEL:** `sudo dnf install -y tesseract`
 
-### Q: Do I need to install Python?
+### Do I need to install Python?
 
-No. `uv` automatically downloads and manages the correct Python version.
+No. `uv` downloads it automatically.
 
-### Q: How do I update DocVert?
+### How do I update DocVert?
 
 ```bash
 cd docvert
 git pull
 uv sync
+```
+
+### "No such file or directory" when I type `cd docvert`
+
+DocVert is probably in your home folder:
+
+```bash
+cd ~/docvert
 ```
