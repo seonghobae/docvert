@@ -1,9 +1,48 @@
 site_name: DocVert Manual
-site_description: Documentation for DocVert
+site_url: https://seonghobae.github.io/docvert/
+site_description: DocVert — Convert DOCX and PDF to semantic Markdown
+repo_url: https://github.com/seonghobae/docvert
+repo_name: seonghobae/docvert
+
 theme:
   name: material
   language: ko
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
 nav:
   - Home: index.md
-  - 영문 매뉴얼: manual.md
-  - 한글 매뉴얼: web-manual-ko.md
+  - Installation Guide (English): installation-guide.md
+  - 설치 가이드 (한국어): web-manual-ko.md
+  - User Manual & CLI Reference: manual.md
+  - Offline / Air-Gapped Deployment: operations/offline-release-runbook.md
+  - Architecture:
+    - Parser Choices (ADR): architecture-decision-records/0001-parser-choices.md
+
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
