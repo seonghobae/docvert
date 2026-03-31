@@ -5,17 +5,19 @@ from typing import Optional
 from loguru import logger
 
 try:
-    from openai import OpenAI
+    from litellm import completion
+    import litellm
 except ImportError:
-    OpenAI = None  # type: ignore
+    completion = None  # type: ignore
 
 
 class LLMRefiner:
     """An LLM-powered agent to refine and fix markdown structure.
 
     Attributes:
-        client (OpenAI): The OpenAI client instance.
         model (str): The model to use for refinement.
+        api_key (str, optional): The API key for the provider.
+        base_url (str, optional): Custom base URL.
     """
 
     def __init__(
@@ -27,22 +29,24 @@ class LLMRefiner:
         """Initializes the LLMRefiner.
 
         Args:
-            api_key (str, optional): The OpenAI API key. Defaults to environment variable.
-            model (str, optional): The OpenAI model. Defaults to "gpt-4o-mini".
-            base_url (str, optional): Custom base URL for OpenAI-compatible APIs (e.g., local Ollama, Groq, vLLM). Defaults to OPENAI_BASE_URL.
+            api_key (str, optional): The API key. Defaults to environment variable.
+            model (str, optional): The model name (litellm format). Defaults to "gpt-4o-mini".
+            base_url (str, optional): Custom base URL for compatible APIs. Defaults to relevant env var.
 
         Raises:
-            ImportError: If openai package is not installed.
+            ImportError: If litellm package is not installed.
         """
-        if OpenAI is None:
+        if completion is None:
             raise ImportError(
-                "The 'openai' package is required for the agent. Run `pip install openai`."
+                "The 'litellm' package is required for the agent. Run `pip install litellm`."
             )
 
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.base_url = base_url or os.getenv("OPENAI_BASE_URL")
-        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.model = model
+        
+        # Suppress verbose litellm logging if desired
+        litellm.suppress_debug_info = True
 
     def refine_markdown(self, raw_markdown: str) -> str:
         """Refines raw markdown by fixing structural and OCR errors via LLM.
@@ -55,9 +59,9 @@ class LLMRefiner:
         """
         logger.info(f"Refining markdown using {self.model}...")
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
+            kwargs = {
+                "model": self.model,
+                "messages": [
                     {
                         "role": "system",
                         "content": (
@@ -72,8 +76,14 @@ class LLMRefiner:
                         "content": raw_markdown,
                     },
                 ],
-                temperature=0.1,
-            )
+                "temperature": 0.1,
+            }
+            if self.api_key:
+                kwargs["api_key"] = self.api_key
+            if self.base_url:
+                kwargs["base_url"] = self.base_url
+
+            response = completion(**kwargs)
             refined = response.choices[0].message.content
             return refined.strip() if refined else raw_markdown
         except Exception as e:
