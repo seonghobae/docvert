@@ -14,3 +14,9 @@ dependencies = [
     "python-docx>=1.2.0",
     "unstructured>=0.22.6",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.1.0",
+]
