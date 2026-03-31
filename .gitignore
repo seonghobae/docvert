@@ -9,3 +9,4 @@ task_agent_mapping.json
 test*.pdf
 .coverage
 failures.csv
+coverage.xml
