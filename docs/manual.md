@@ -8,14 +8,14 @@ Docvert is designed to handle complex document structures from DOCX and PDF form
 
 Every processed document yields:
 1. `document.md`: The semantic Markdown output.
-2. `document.json`: A sidecar file containing metadata, parsing confidence scores, and warnings.
-3. `/images/`: A directory with extracted images (if the document contains visuals).
+2. `document.conversion.json`: A sidecar file containing metadata, parser used, hash, and warnings.
+3. `/document.assets/`: A directory for extracted assets related to the document.
 
 ## CLI Usage
 
 The Docvert CLI exposes commands to run conversions on single files or process batches of files.
 
-You can run the CLI using standard Python or via environment managers like `uv` or `poetry`.
+You can run the CLI using standard Python or via environment managers like `uv`.
 
 ```bash
 # Using standard Python (if installed globally or in an active venv)
@@ -23,9 +23,6 @@ python -m docvert.cli.main [COMMAND] [OPTIONS]
 
 # Using uv
 uv run python -m docvert.cli.main [COMMAND] [OPTIONS]
-
-# Using poetry
-poetry run python -m docvert.cli.main [COMMAND] [OPTIONS]
 ```
 
 ### Commands
@@ -34,51 +31,48 @@ poetry run python -m docvert.cli.main [COMMAND] [OPTIONS]
 Convert a single DOCX or PDF file to Markdown.
 
 **Arguments:**
-- `FILE`: Path to the input DOCX or PDF file.
+- `input`: Path to the input DOCX or PDF file.
 
 **Options:**
-- `--output-dir`, `-o`: Directory to save the generated `.md`, `.json`, and images. (Default: `./output`)
-- `--force`, `-f`: Ignore cache and force reprocessing of the file.
-- `--verbose`, `-v`: Enable detailed logging.
+- `--output-dir`: Directory to save the generated `.md`, `.json`, and assets. (Default: `./out`)
+- `--llm-refiner`: Flag to use LLM to refine the markdown output.
 
 **Example:**
 ```bash
-python -m docvert.cli.main convert ./docs/sample.pdf -o ./results -v
+python -m docvert.cli.main convert ./docs/sample.pdf --output-dir ./results --llm-refiner
 ```
 
 #### `batch`
 Process a directory of DOCX and/or PDF files, with built-in caching.
 
 **Arguments:**
-- `DIR`: Path to the directory containing input files.
+- `input_dir`: Path to the directory containing input files.
 
 **Options:**
-- `--output-dir`, `-o`: Directory to save all outputs. Subdirectories matching the source structure will be created. (Default: `./output`)
-- `--workers`, `-w`: Number of parallel workers for processing. (Default: 4)
-- `--force`, `-f`: Ignore cache and force reprocessing of all files.
+- `--output-dir`: Directory to save all outputs. Subdirectories matching the source structure will be created. (Default: `./out`)
+- `--continue-on-error`: Continue processing if a file fails.
+- `--cache`: Use hashing to skip already processed files.
+- `--llm-refiner`: Flag to use LLM to refine the markdown output.
 
 **Example:**
 ```bash
-python -m docvert.cli.main batch ./company_docs -o ./processed_docs --workers 8
+python -m docvert.cli.main batch ./company_docs --output-dir ./processed_docs --continue-on-error --cache
 ```
 
 ## Sidecar JSON Structure
 
-Alongside every `output.md`, Docvert generates an `output.json` sidecar. This provides programmatic insight into the parsing quality:
+Alongside every `output.md`, Docvert generates an `output.conversion.json` sidecar. This provides programmatic insight into the parsing quality:
 
 ```json
 {
+  "confidence": 1.0,
+  "file_hash": "d41d8cd98f00b204e9800998ecf8427e",
+  "input_format": ".docx",
+  "llm_refined": false,
+  "output_file": "out/sample.md",
+  "parser_path_used": "DocxParser",
   "source_file": "sample.docx",
-  "parser_used": "python-docx",
-  "fallback_triggered": false,
-  "confidence_score": 0.95,
-  "metadata": {
-    "author": "Jane Doe",
-    "created_at": "2023-10-01T12:00:00Z"
-  },
-  "warnings": [
-    "Unrecognized styling at paragraph 14, defaulting to standard text."
-  ]
+  "warnings": []
 }
 ```
 
@@ -86,12 +80,14 @@ Alongside every `output.md`, Docvert generates an `output.json` sidecar. This pr
 
 Docvert is built with a modular, pipeline-based architecture, strongly typed via `pydantic`.
 
-1. **CLI Layer (`docvert.cli`)**: Handles user input, argument parsing, and logging configuration.
-2. **Controller/Agent Layer (`docvert.agent`)**: Orchestrates the parsing process. It checks the cache, decides which parser to instantiate, and manages fallback logic if a primary parser fails or returns a low confidence score.
+1. **CLI Layer (`docvert.cli`)**: Handles user input, argument parsing, and command routing.
+2. **Core Layer (`docvert.core`)**: 
+   - `BatchProcessor`: Orchestrates the parsing process. It checks the cache via file hashing, decides which parser to instantiate, and optionally invokes the LLM refiner.
+   - `Writer`: Writes the output Markdown, the sidecar `.conversion.json`, and manages asset directories.
 3. **Parser Engines (`docvert.parsers`)**:
    - `DocxParser`: Uses `python-docx` for primary processing (employing heuristic heading detection) and `mammoth` as a fallback.
    - `PdfParser`: Uses `docling` for primary PDF processing and `unstructured` as a fallback.
-4. **Post-Processor (`docvert.postprocessor`)**: Cleans up the Markdown output, standardizes heading levels, and ensures image references correctly point to the locally extracted `/images` directory.
-5. **Output Generator (`docvert.writer`)**: Writes the `.md`, the sidecar `.json`, and saves extracted images to disk.
+4. **Agent Layer (`docvert.agent`)**:
+   - `LLMRefiner`: An optional, LLM-powered post-processor that cleans up the Markdown output, fixes semantic structure, and addresses obvious OCR or parsing errors.
 
-All data structures passing between these layers are validated by `pydantic` models, ensuring that developers and LLM agents working with the codebase can rely on predictable inputs and outputs.
+All data structures passing between these layers are modeled in `docvert.models`, ensuring that developers and LLM agents working with the codebase can rely on predictable inputs and outputs.
