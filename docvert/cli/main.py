@@ -1,3 +1,5 @@
+"""Command-line interface module for Docvert."""
+
 import argparse
 import sys
 from pathlib import Path

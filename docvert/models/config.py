@@ -1,3 +1,5 @@
+"""Configuration model for Docvert document processing."""
+
 from typing import List, Literal
 from pydantic import BaseModel, Field
 

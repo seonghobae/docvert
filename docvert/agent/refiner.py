@@ -1,3 +1,5 @@
+"""LLM-powered markdown refinement module."""
+
 import os
 from loguru import logger
 
