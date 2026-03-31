@@ -1,0 +1,9 @@
+.venv
+__pycache__/
+.ruff_cache/
+.pytest_cache/
+*.pyc
+.env
+registered_agents.json
+task_agent_mapping.json
+test*.pdf
