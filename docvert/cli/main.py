@@ -13,9 +13,11 @@ except ImportError:
     # Stub for BatchProcessor if it's not yet implemented
     class BatchProcessor:  # type: ignore
         """Stub for BatchProcessor."""
-        def __init__(self, config: DocvertConfig):
+
+        def __init__(self, config: DocvertConfig, output_dir: Path = Path("./out")):
             """Initialize stub."""
             self.config = config
+            self.output_dir = output_dir
 
         def process(self, files: List[Path]) -> None:
             """Process stub."""
@@ -33,93 +35,116 @@ def parse_args() -> argparse.Namespace:
         description="Docvert: Convert documents to Markdown."
     )
 
-    # Input arguments
-    parser.add_argument(
-        "inputs", nargs="*", type=Path, help="Input files or directories to process."
-    )
-    parser.add_argument(
-        "--input-dir",
+    common_parser = argparse.ArgumentParser(add_help=False)
+
+    common_parser.add_argument(
+        "--output-dir",
         type=Path,
-        help="Input directory (alternative to positional arguments).",
+        default=Path("./out"),
+        help="Directory to save the generated files. (Default: ./out)",
+    )
+    common_parser.add_argument(
+        "--llm-refiner",
+        action="store_true",
+        help="Flag to use LLM to refine the markdown output.",
+    )
+    common_parser.add_argument(
+        "--llm-model",
+        type=str,
+        default="gpt-4o-mini",
+        help="The LLM model to use for refinement (default: gpt-4o-mini).",
     )
 
     # Config arguments
-    parser.add_argument("--language-hint", choices=["ko", "en", "auto"], default="auto")
-    parser.add_argument(
+    common_parser.add_argument(
+        "--language-hint", choices=["ko", "en", "auto"], default="auto"
+    )
+    common_parser.add_argument(
         "--ocr-languages",
         nargs="+",
         default=["ko", "en"],
         help="List of OCR languages (e.g., ko en)",
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--heading-mode", choices=["auto", "style_only", "heuristic"], default="auto"
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--comment-mode",
         choices=["preserve", "appendix", "inline", "drop"],
         default="preserve",
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--footnote-mode",
         choices=["preserve", "appendix", "inline"],
         default="preserve",
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--image-mode",
         choices=["extract_link", "embed", "extract_with_ocr", "skip"],
         default="extract_link",
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--table-mode",
         choices=["markdown_preferred", "html_for_complex"],
         default="markdown_preferred",
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--pdf-reading-order-mode",
         choices=["auto", "layout_strict", "ocr_fallback"],
         default="auto",
     )
 
     # Boolean flags
-    parser.add_argument(
+    common_parser.add_argument(
         "--include-headers-footers",
         action=argparse.BooleanOptionalAction,
         default=False,
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--normalize-heading-levels",
         action=argparse.BooleanOptionalAction,
         default=True,
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--preserve-numbering", action=argparse.BooleanOptionalAction, default=True
     )
-    parser.add_argument(
-        "--continue-on-error", action=argparse.BooleanOptionalAction, default=True
-    )
-    parser.add_argument(
-        "--cache-by-hash", action=argparse.BooleanOptionalAction, default=True
-    )
-    parser.add_argument(
+    common_parser.add_argument(
         "--deterministic", action=argparse.BooleanOptionalAction, default=True
     )
-    parser.add_argument(
+    common_parser.add_argument(
         "--aggressive-heading-inference",
         action=argparse.BooleanOptionalAction,
         default=False,
     )
 
-    parser.add_argument(
-        "--use-llm-refiner",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="Use LLM agent to refine the generated markdown output.",
+    subparsers = parser.add_subparsers(dest="command")
+
+    # convert subcommand
+    convert_parser = subparsers.add_parser(
+        "convert",
+        parents=[common_parser],
+        help="Convert a single DOCX or PDF file to Markdown.",
     )
-    parser.add_argument(
-        "--llm-model",
-        type=str,
-        default="gpt-4o-mini",
-        help="The LLM model to use for refinement (default: gpt-4o-mini).",
+    convert_parser.add_argument(
+        "input", type=Path, help="Path to the input DOCX or PDF file."
+    )
+
+    # batch subcommand
+    batch_parser = subparsers.add_parser(
+        "batch",
+        parents=[common_parser],
+        help="Process a directory of DOCX and/or PDF files.",
+    )
+    batch_parser.add_argument(
+        "input_dir", type=Path, help="Path to the directory containing input files."
+    )
+    batch_parser.add_argument(
+        "--continue-on-error", action=argparse.BooleanOptionalAction, default=True
+    )
+    batch_parser.add_argument(
+        "--cache",
+        action="store_true",
+        help="Use hashing to skip already processed files.",
     )
 
     return parser.parse_args()
@@ -133,23 +158,26 @@ def main() -> None:
     """
     args = parse_args()
 
-    # Gather inputs
     target_files: List[Path] = []
 
-    if args.inputs:
-        for p in args.inputs:
-            if p.is_file():
-                target_files.append(p)
-            elif p.is_dir():
-                target_files.extend(f for f in p.rglob("*") if f.is_file())
-            else:
-                print(f"Warning: '{p}' does not exist.", file=sys.stderr)
+    if getattr(args, "command", None) == "convert":
+        if args.input.is_file():
+            target_files.append(args.input)
+        else:
+            print(
+                f"Warning: '{args.input}' does not exist or is not a file.",
+                file=sys.stderr,
+            )
 
-    if args.input_dir:
+    elif getattr(args, "command", None) == "batch":
         if not args.input_dir.is_dir():
             print(f"Error: '{args.input_dir}' is not a directory.", file=sys.stderr)
             sys.exit(1)
         target_files.extend(f for f in args.input_dir.rglob("*") if f.is_file())
+
+    else:
+        print("Error: No command provided. Use 'convert' or 'batch'.", file=sys.stderr)
+        sys.exit(1)
 
     # Deduplicate files while maintaining order
     seen = set()
@@ -163,29 +191,47 @@ def main() -> None:
         print("Error: No valid input files provided.", file=sys.stderr)
         sys.exit(1)
 
+    # Prepare specific configs based on command
+    continue_on_error = getattr(args, "continue_on_error", True)
+    if getattr(args, "command", None) == "convert":
+        continue_on_error = False
+
+    cache_by_hash = (
+        getattr(args, "cache", False)
+        if getattr(args, "command", None) == "batch"
+        else False
+    )
+
+    use_llm_refiner = False
+    if hasattr(args, "llm_refiner") and args.llm_refiner:
+        use_llm_refiner = True
+
     # Build Pydantic Config Model
     config = DocvertConfig(
-        language_hint=args.language_hint,
-        ocr_languages=args.ocr_languages,
-        heading_mode=args.heading_mode,
-        comment_mode=args.comment_mode,
-        footnote_mode=args.footnote_mode,
-        image_mode=args.image_mode,
-        table_mode=args.table_mode,
-        pdf_reading_order_mode=args.pdf_reading_order_mode,
-        include_headers_footers=args.include_headers_footers,
-        normalize_heading_levels=args.normalize_heading_levels,
-        preserve_numbering=args.preserve_numbering,
-        continue_on_error=args.continue_on_error,
-        cache_by_hash=args.cache_by_hash,
-        deterministic=args.deterministic,
-        aggressive_heading_inference=args.aggressive_heading_inference,
-        use_llm_refiner=args.use_llm_refiner,
-        llm_model=args.llm_model,
+        language_hint=getattr(args, "language_hint", "auto"),
+        ocr_languages=getattr(args, "ocr_languages", ["ko", "en"]),
+        heading_mode=getattr(args, "heading_mode", "auto"),
+        comment_mode=getattr(args, "comment_mode", "preserve"),
+        footnote_mode=getattr(args, "footnote_mode", "preserve"),
+        image_mode=getattr(args, "image_mode", "extract_link"),
+        table_mode=getattr(args, "table_mode", "markdown_preferred"),
+        pdf_reading_order_mode=getattr(args, "pdf_reading_order_mode", "auto"),
+        include_headers_footers=getattr(args, "include_headers_footers", False),
+        normalize_heading_levels=getattr(args, "normalize_heading_levels", True),
+        preserve_numbering=getattr(args, "preserve_numbering", True),
+        continue_on_error=continue_on_error,
+        cache_by_hash=cache_by_hash,
+        deterministic=getattr(args, "deterministic", True),
+        aggressive_heading_inference=getattr(
+            args, "aggressive_heading_inference", False
+        ),
+        use_llm_refiner=use_llm_refiner,
+        llm_model=getattr(args, "llm_model", "gpt-4o-mini"),
     )
 
     # Process
-    processor = BatchProcessor(config=config)
+    output_dir = getattr(args, "output_dir", Path("./out"))
+    processor = BatchProcessor(config=config, output_dir=output_dir)
     processor.process(unique_target_files)
 
 
