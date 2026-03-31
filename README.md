@@ -39,9 +39,9 @@ Full documentation is available at **[seonghobae.github.io/docvert](https://seon
 
 - [Installation Guide (English)](https://seonghobae.github.io/docvert/installation-guide/) — Per-OS zero-setup, no Homebrew required
 - [설치 가이드 (한국어)](https://seonghobae.github.io/docvert/web-manual-ko/) — OS별 제로셋업 설치 안내
-- [User Manual & CLI Reference](docs/manual.md)
-- [Offline Deployment Runbook](docs/operations/offline-release-runbook.md)
-- [Architecture Decision Records](docs/architecture-decision-records/0001-parser-choices.md)
+- [User Manual & CLI Reference](https://seonghobae.github.io/docvert/manual/) — CLI usage, LLM configuration, architecture
+- [Offline Deployment Runbook](https://seonghobae.github.io/docvert/operations/offline-release-runbook/) — Air-gapped setup guide
+- [Architecture Decision Records](https://seonghobae.github.io/docvert/architecture-decision-records/0001-parser-choices/) — Parser implementation choices
 
 ## GitHub Releases (Offline Bundles)
 
