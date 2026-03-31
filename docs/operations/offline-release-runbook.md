@@ -21,20 +21,25 @@ Run the automated build script on a machine with internet access and Docker inst
 2. Saves the image to a tarball (`docker save`).
 3. Compresses the image and bundles it with a `README-OFFLINE.md`.
 4. Produces a final `docvert-offline-release.tar.gz` archive.
+5. Splits the archive into 1.5GB chunks (`docvert-offline-release.tar.gz.part-*`) to bypass GitHub's 2GB file size limit for release assets.
 
 ## Deployment (Offline Environment)
 
-1. Transfer `docvert-offline-release.tar.gz` to the target air-gapped machine via secure media (e.g., USB, secure file transfer).
-2. Extract the archive:
+1. Transfer all `docvert-offline-release.tar.gz.part-*` files to the target air-gapped machine via secure media (e.g., USB, secure file transfer).
+2. Combine the split archive chunks:
+   ```bash
+   cat docvert-offline-release.tar.gz.part-* > docvert-offline-release.tar.gz
+   ```
+3. Extract the archive:
    ```bash
    tar -xzvf docvert-offline-release.tar.gz
    cd docvert-offline-release
    ```
-3. Load the Docker image into the local registry:
+4. Load the Docker image into the local registry:
    ```bash
    docker load -i docvert-offline.tar.gz
    ```
-4. Verify the image is available:
+5. Verify the image is available:
    ```bash
    docker images | grep docvert
    ```
@@ -62,5 +67,5 @@ docker run --rm \
 
 When a new version of Docvert is released, or when dependencies change:
 1. Re-run `./scripts/build_offline_bundle.sh` on the internet-connected build machine.
-2. Transfer the new archive to the offline environment.
+2. Transfer the new archive chunks to the offline environment.
 3. Reload the image using `docker load`. The `latest` (or `offline`) tag will automatically point to the newly loaded image.
