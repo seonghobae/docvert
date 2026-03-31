@@ -18,12 +18,18 @@ class LLMRefiner:
         model (str): The model to use for refinement.
     """
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "gpt-4o-mini",
+        base_url: Optional[str] = None,
+    ):
         """Initializes the LLMRefiner.
 
         Args:
             api_key (str, optional): The OpenAI API key. Defaults to environment variable.
             model (str, optional): The OpenAI model. Defaults to "gpt-4o-mini".
+            base_url (str, optional): Custom base URL for OpenAI-compatible APIs (e.g., local Ollama, Groq, vLLM). Defaults to OPENAI_BASE_URL.
 
         Raises:
             ImportError: If openai package is not installed.
@@ -34,7 +40,8 @@ class LLMRefiner:
             )
 
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.client = OpenAI(api_key=self.api_key)
+        self.base_url = base_url or os.getenv("OPENAI_BASE_URL")
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.model = model
 
     def refine_markdown(self, raw_markdown: str) -> str:
