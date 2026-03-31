@@ -32,9 +32,18 @@ nav:
   - Installation Guide (English): installation-guide.md
   - 설치 가이드 (한국어): web-manual-ko.md
   - User Manual & CLI Reference: manual.md
-  - Offline / Air-Gapped Deployment: operations/offline-release-runbook.md
+  - Operations:
+    - Deploy Runbook: operations/deploy-runbook.md
+    - Offline / Air-Gapped Deployment: operations/offline-release-runbook.md
+  - Engineering:
+    - Acceptance Criteria: engineering/acceptance-criteria.md
+    - Test Harness: engineering/harness-engineering.md
+    - PR Continuity: workflow/pr-continuity.md
   - Architecture:
     - Parser Choices (ADR): architecture-decision-records/0001-parser-choices.md
+  - Contributing:
+    - Agents & Skills: agents/README.md
+    - CodeRabbit Review: coderabbit/review-commands.md
 
 markdown_extensions:
   - tables
