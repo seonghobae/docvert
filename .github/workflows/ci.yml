@@ -43,4 +43,6 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras --dev
       - name: Run tests with pytest (100% coverage enforced)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: PYTHONPATH=. uv run pytest --cov=docvert --cov-fail-under=100 tests/
