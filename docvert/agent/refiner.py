@@ -1,7 +1,7 @@
 """LLM-powered markdown refinement module."""
 
 import os
-from typing import Optional, Any
+from typing import Optional
 from loguru import logger
 
 try:
