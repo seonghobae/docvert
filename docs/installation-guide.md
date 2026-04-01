@@ -50,6 +50,8 @@ Some commands start with `sudo`, which asks for your password. When you type the
 | **Linux** | [Linux Installation](#linux-installation) |
 | **No internet** (air-gapped) | [Offline Installation](#offline-installation) |
 
+> **About Docker Desktop:** There is also a Docker-based installation method, but Docker Desktop **permanently uses 2-4GB+ of RAM** whenever your computer is on. This is heavy for casual users, so this guide recommends **native installation without Docker** for Mac, Windows, and Linux. Docker is only used for the offline/air-gapped scenario.
+
 ---
 
 ## Mac Installation
