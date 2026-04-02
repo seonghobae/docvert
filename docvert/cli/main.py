@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import List
 
+from docvert import __version__
 from docvert.models.config import DocvertConfig
 
 try:
@@ -33,6 +34,12 @@ def parse_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(
         description="Docvert: Convert documents to Markdown."
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version=f"docvert {__version__}",
     )
 
     common_parser = argparse.ArgumentParser(add_help=False)

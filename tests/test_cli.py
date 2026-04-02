@@ -7,6 +7,7 @@ import runpy
 import importlib
 from unittest.mock import patch
 
+from docvert import __version__
 from docvert.cli.main import main
 
 
@@ -167,3 +168,51 @@ def test_fallback_batch_processor(capsys: Any, temp_workspace: Any) -> None:
 
     # Reload again to restore original state
     importlib.reload(docvert.cli.main)
+
+
+def test_version_flag(capsys: Any) -> None:
+    """Test that ``--version`` prints version info and exits with code 0."""
+    with patch.object(sys, "argv", ["docvert", "--version"]):
+        with pytest.raises(SystemExit) as excinfo:
+            main()
+        assert excinfo.value.code == 0
+
+    captured = capsys.readouterr()
+    assert "docvert" in captured.out
+
+
+def test_version_short_flag(capsys: Any) -> None:
+    """Test that ``-V`` prints version info and exits with code 0."""
+    with patch.object(sys, "argv", ["docvert", "-V"]):
+        with pytest.raises(SystemExit) as excinfo:
+            main()
+        assert excinfo.value.code == 0
+
+    captured = capsys.readouterr()
+    assert "docvert" in captured.out
+
+
+def test_version_value(capsys: Any) -> None:
+    """Test that version output contains the expected version string."""
+    with patch.object(sys, "argv", ["docvert", "--version"]):
+        with pytest.raises(SystemExit) as excinfo:
+            main()
+        assert excinfo.value.code == 0
+
+    captured = capsys.readouterr()
+    assert f"docvert {__version__}" in captured.out
+
+
+def test_version_fallback_on_package_not_found() -> None:
+    """Test that ``__version__`` falls back to 'unknown' when metadata is missing."""
+    import docvert
+    from importlib.metadata import PackageNotFoundError
+
+    with patch(
+        "importlib.metadata.version", side_effect=PackageNotFoundError("docvert")
+    ):
+        importlib.reload(docvert)
+        assert docvert.__version__ == "unknown"
+
+    # Restore original module state
+    importlib.reload(docvert)
