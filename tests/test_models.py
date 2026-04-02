@@ -176,15 +176,18 @@ def test_document_to_markdown_table_varying_columns() -> None:
 def test_document_to_markdown_table_empty_first_row() -> None:
     """Table whose first row is empty should degrade gracefully.
 
-    When the first row has no cells the separator row is also empty,
-    but subsequent data rows are still rendered.
+    When the first row has no cells the separator row is skipped,
+    but subsequent data rows are still rendered.  The expected output
+    is an empty pipe row (``|  |``) for the empty first row, no separator,
+    then the data row, and a trailing blank line.
     """
     blocks = [
         Table(content="", rows=[[], ["Data1", "Data2"]]),
     ]
     doc = Document(blocks=blocks)
     markdown = doc.to_markdown()
-    assert "|" in markdown or markdown == "\n"
+    expected = "|  |\n| Data1 | Data2 |\n\n"
+    assert markdown == expected
 
 
 def test_document_to_markdown_table_pipe_escape() -> None:
@@ -208,6 +211,8 @@ def test_document_to_markdown_table_content_fallback() -> None:
 
     The PDF parser (docling path) produces ``Table(content=markdown, rows=[])``
     where ``content`` already holds a pre-formatted Markdown table string.
+    The exact output is the verbatim ``content`` followed by a trailing
+    blank line.
     """
     pre_formatted = "| X | Y |\n| --- | --- |\n| 1 | 2 |"
     blocks = [
@@ -215,7 +220,7 @@ def test_document_to_markdown_table_content_fallback() -> None:
     ]
     doc = Document(blocks=blocks)
     markdown = doc.to_markdown()
-    assert pre_formatted in markdown
+    assert markdown == pre_formatted + "\n\n"
 
 
 def test_document_to_markdown_other_block() -> None:

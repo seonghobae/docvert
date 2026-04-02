@@ -113,7 +113,7 @@ class Document:
                     for i, row in enumerate(block.rows):
                         escaped = [cell.replace("|", "\\|") for cell in row]
                         lines.append("| " + " | ".join(escaped) + " |")
-                        if i == 0:
+                        if i == 0 and row:
                             lines.append(
                                 "| " + " | ".join("---" for _ in row) + " |"
                             )
