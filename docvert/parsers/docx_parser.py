@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
 import docx
 import mammoth  # type: ignore
 from docx.document import Document as _Document
@@ -18,14 +18,9 @@ from docvert.models.document import (
     Paragraph as DocvertParagraph,
     Table as DocvertTable,
 )
+from docvert.models.config import DocvertConfig
 
 logger = logging.getLogger(__name__)
-
-
-class DocvertConfig:
-    """A stub for the config class in case it doesn't exist yet."""
-
-    pass
 
 
 class DocxParser:
@@ -34,10 +29,11 @@ class DocxParser:
     Extracts paragraphs, headings, and tables using python-docx with a fallback to mammoth.
 
     Args:
-        config (Optional[Any]): Configuration object. Defaults to an empty DocvertConfig.
+        config (Optional[DocvertConfig]): Configuration object. Defaults to a
+            ``DocvertConfig`` instance with all default values.
     """
 
-    def __init__(self, config: Optional[Any] = None):
+    def __init__(self, config: Optional[DocvertConfig] = None):
         """Initialize the DocxParser with configuration.
 
         Stores the configuration used for heading detection heuristics,
@@ -46,7 +42,7 @@ class DocxParser:
         Args:
             config: Optional configuration object controlling parsing
                 behavior (heading mode, image mode, etc.). Defaults to
-                a stub ``DocvertConfig`` if not provided.
+                a ``DocvertConfig`` with all default values if not provided.
         """
         self.config = config or DocvertConfig()
 

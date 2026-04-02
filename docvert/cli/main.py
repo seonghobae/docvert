@@ -7,23 +7,7 @@ from typing import List
 
 from docvert import __version__
 from docvert.models.config import DocvertConfig
-
-try:
-    from docvert.core.batch import BatchProcessor
-except ImportError:
-    # Stub for BatchProcessor if it's not yet implemented
-    class BatchProcessor:  # type: ignore
-        """Stub for BatchProcessor."""
-
-        def __init__(self, config: DocvertConfig, output_dir: Path = Path("./out")):
-            """Initialize stub."""
-            self.config = config
-            self.output_dir = output_dir
-
-        def process(self, files: List[Path]) -> None:
-            """Process stub."""
-            print(f"Stub: Processing {len(files)} files with config:")
-            print(self.config.model_dump_json(indent=2))
+from docvert.core.batch import BatchProcessor
 
 
 def parse_args() -> argparse.Namespace:
