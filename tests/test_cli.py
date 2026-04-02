@@ -152,22 +152,16 @@ def test_main_execution() -> None:
             sys.modules["docvert.cli.main"] = orig_module
 
 
-def test_fallback_batch_processor(capsys: Any, temp_workspace: Any) -> None:
-    # Force ImportError for docvert.core.batch
-    import docvert.cli.main
+def test_batch_processor_import() -> None:
+    """Verify that ``BatchProcessor`` is directly importable from ``docvert.core.batch``.
 
-    with patch.dict("sys.modules", {"docvert.core.batch": None}):
-        importlib.reload(docvert.cli.main)
+    The CLI module no longer carries a stub fallback; it relies on
+    a direct import of the real ``BatchProcessor``.  This test ensures
+    the import path remains valid.
+    """
+    from docvert.core.batch import BatchProcessor as BP  # noqa: F401
 
-        tmp_path, d1, f1, f2 = temp_workspace
-        with patch.object(sys, "argv", ["docvert", "convert", str(f1)]):
-            docvert.cli.main.main()
-
-        captured = capsys.readouterr()
-        assert "Stub: Processing 1 files with config:" in captured.out
-
-    # Reload again to restore original state
-    importlib.reload(docvert.cli.main)
+    assert callable(BP)
 
 
 def test_version_flag(capsys: Any) -> None:
