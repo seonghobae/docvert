@@ -89,7 +89,9 @@ class Document:
 
         - **Heading**: Rendered as ``# ... ######`` with the appropriate level prefix.
         - **Paragraph**: Rendered as plain text.
-        - **Table**: Rendered as a pipe-delimited Markdown table (no header separator row).
+        - **Table**: Rendered as a pipe-delimited Markdown table with a header separator
+          row (``| --- | --- |``) after the first row so that standard renderers
+          recognise it as a proper table.
         - **Image**: Rendered as ``![alt](filepath)`` using the block's filepath or empty string.
 
         Each block is followed by a blank line. Blocks are joined with newlines to
@@ -105,8 +107,10 @@ class Document:
             elif isinstance(block, Paragraph):
                 lines.append(f"{block.content}\n")
             elif isinstance(block, Table):
-                for row in block.rows:
+                for i, row in enumerate(block.rows):
                     lines.append("| " + " | ".join(row) + " |")
+                    if i == 0:
+                        lines.append("| " + " | ".join("---" for _ in row) + " |")
                 lines.append("\n")
             elif isinstance(block, Image):
                 path = block.filepath or ""

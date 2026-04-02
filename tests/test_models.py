@@ -105,8 +105,55 @@ def test_document_to_markdown_table() -> None:
     ]
     doc = Document(blocks=blocks)
     markdown = doc.to_markdown()
-    expected = "Here is a table:\n\n| Header 1 | Header 2 |\n| Val 1 | Val 2 |\n\n"
+    expected = "Here is a table:\n\n| Header 1 | Header 2 |\n| --- | --- |\n| Val 1 | Val 2 |\n\n"
     assert markdown == expected
+
+
+def test_document_to_markdown_table_header_separator() -> None:
+    """Table Markdown must include a header separator row after the first row.
+
+    Standard Markdown tables require a ``| --- | --- |`` separator between
+    the header row and data rows. Without it, renderers treat the pipe-delimited
+    lines as plain text rather than a table.
+    """
+    blocks = [
+        Table(content="", rows=[["Name", "Age"], ["Alice", "30"], ["Bob", "25"]]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    expected = (
+        "| Name | Age |\n"
+        "| --- | --- |\n"
+        "| Alice | 30 |\n"
+        "| Bob | 25 |\n"
+        "\n"
+    )
+    assert markdown == expected
+
+
+def test_document_to_markdown_table_single_row() -> None:
+    """A table with only one row should still get a header separator row."""
+    blocks = [
+        Table(content="", rows=[["Header1", "Header2"]]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    expected = (
+        "| Header1 | Header2 |\n"
+        "| --- | --- |\n"
+        "\n"
+    )
+    assert markdown == expected
+
+
+def test_document_to_markdown_table_empty_rows() -> None:
+    """A table with no rows should produce no table output."""
+    blocks = [
+        Table(content="", rows=[]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    assert markdown == "\n"
 
 
 def test_document_to_markdown_other_block() -> None:
