@@ -1,4 +1,4 @@
-FROM python:3.14-rc-slim
+FROM python:3.14-slim
 
 # Install system dependencies required for unstructured and pdf rendering
 RUN apt-get update && apt-get install -y --no-install-recommends \
