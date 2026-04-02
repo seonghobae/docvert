@@ -105,12 +105,131 @@ def test_document_to_markdown_table() -> None:
     ]
     doc = Document(blocks=blocks)
     markdown = doc.to_markdown()
-    expected = "Here is a table:\n\n| Header 1 | Header 2 |\n| Val 1 | Val 2 |\n\n"
+    expected = "Here is a table:\n\n| Header 1 | Header 2 |\n| --- | --- |\n| Val 1 | Val 2 |\n\n"
     assert markdown == expected
 
 
+def test_document_to_markdown_table_header_separator() -> None:
+    """Table Markdown must include a header separator row after the first row.
+
+    Standard Markdown tables require a ``| --- | --- |`` separator between
+    the header row and data rows. Without it, renderers treat the pipe-delimited
+    lines as plain text rather than a table.
+    """
+    blocks = [
+        Table(content="", rows=[["Name", "Age"], ["Alice", "30"], ["Bob", "25"]]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    expected = (
+        "| Name | Age |\n"
+        "| --- | --- |\n"
+        "| Alice | 30 |\n"
+        "| Bob | 25 |\n"
+        "\n"
+    )
+    assert markdown == expected
+
+
+def test_document_to_markdown_table_single_row() -> None:
+    """A table with only one row should still get a header separator row."""
+    blocks = [
+        Table(content="", rows=[["Header1", "Header2"]]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    expected = (
+        "| Header1 | Header2 |\n"
+        "| --- | --- |\n"
+        "\n"
+    )
+    assert markdown == expected
+
+
+def test_document_to_markdown_table_empty_rows() -> None:
+    """A table with no rows should produce no table output."""
+    blocks = [
+        Table(content="", rows=[]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    assert markdown == "\n"
+
+
+def test_document_to_markdown_table_varying_columns() -> None:
+    """Table with inconsistent column counts should not crash.
+
+    The header separator row matches the first row's column count.
+    Subsequent rows with fewer columns still render, though visually
+    the table may look ragged.
+    """
+    blocks = [
+        Table(content="", rows=[["A", "B", "C"], ["1", "2"]]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    assert "| --- | --- | --- |" in markdown
+    assert "| A | B | C |" in markdown
+    assert "| 1 | 2 |" in markdown
+
+
+def test_document_to_markdown_table_empty_first_row() -> None:
+    """Table whose first row is empty should degrade gracefully.
+
+    When the first row has no cells the separator row is skipped,
+    but subsequent data rows are still rendered.  The expected output
+    is an empty pipe row (``|  |``) for the empty first row, no separator,
+    then the data row, and a trailing blank line.
+    """
+    blocks = [
+        Table(content="", rows=[[], ["Data1", "Data2"]]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    expected = "|  |\n| Data1 | Data2 |\n\n"
+    assert markdown == expected
+
+
+def test_document_to_markdown_table_pipe_escape() -> None:
+    """Literal pipe characters inside cell text must be escaped.
+
+    If a cell value contains ``|`` it is replaced with ``\\|`` so that
+    the Markdown table structure is not broken.
+    """
+    blocks = [
+        Table(content="", rows=[["A|B", "C"], ["1", "2|3"]]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    assert "A\\|B" in markdown
+    assert "2\\|3" in markdown
+    assert "| --- | --- |" in markdown
+
+
+def test_document_to_markdown_table_content_fallback() -> None:
+    """When rows is empty but content is set, content is emitted verbatim.
+
+    The PDF parser (docling path) produces ``Table(content=markdown, rows=[])``
+    where ``content`` already holds a pre-formatted Markdown table string.
+    The exact output is the verbatim ``content`` followed by a trailing
+    blank line.
+    """
+    pre_formatted = "| X | Y |\n| --- | --- |\n| 1 | 2 |"
+    blocks = [
+        Table(content=pre_formatted, rows=[]),
+    ]
+    doc = Document(blocks=blocks)
+    markdown = doc.to_markdown()
+    assert markdown == pre_formatted + "\n\n"
+
+
 def test_document_to_markdown_other_block() -> None:
-    # If a generic block is used, it should be ignored by the to_markdown method right now
+    """Generic Block instances are silently skipped during Markdown rendering.
+
+    Only recognized subclasses (Heading, Paragraph, Table, Image) produce
+    output.  A bare ``Block`` is ignored so that unrecognized block types
+    do not corrupt the document.
+    """
     blocks = [Block(content="Invisible"), Paragraph(content="Visible")]
     doc = Document(blocks=blocks)
     markdown = doc.to_markdown()

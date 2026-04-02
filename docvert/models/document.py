@@ -89,7 +89,11 @@ class Document:
 
         - **Heading**: Rendered as ``# ... ######`` with the appropriate level prefix.
         - **Paragraph**: Rendered as plain text.
-        - **Table**: Rendered as a pipe-delimited Markdown table (no header separator row).
+        - **Table**: If ``rows`` is non-empty, rendered as a pipe-delimited Markdown
+          table with a header separator row (``| --- | --- |``) after the first row.
+          Literal pipe characters inside cell text are escaped as ``\\|``.  If
+          ``rows`` is empty but ``content`` is non-empty (e.g. pre-formatted Markdown
+          from the PDF parser), ``content`` is emitted verbatim.
         - **Image**: Rendered as ``![alt](filepath)`` using the block's filepath or empty string.
 
         Each block is followed by a blank line. Blocks are joined with newlines to
@@ -105,8 +109,16 @@ class Document:
             elif isinstance(block, Paragraph):
                 lines.append(f"{block.content}\n")
             elif isinstance(block, Table):
-                for row in block.rows:
-                    lines.append("| " + " | ".join(row) + " |")
+                if block.rows:
+                    for i, row in enumerate(block.rows):
+                        escaped = [cell.replace("|", "\\|") for cell in row]
+                        lines.append("| " + " | ".join(escaped) + " |")
+                        if i == 0 and row:
+                            lines.append(
+                                "| " + " | ".join("---" for _ in row) + " |"
+                            )
+                elif block.content:
+                    lines.append(block.content)
                 lines.append("\n")
             elif isinstance(block, Image):
                 path = block.filepath or ""
