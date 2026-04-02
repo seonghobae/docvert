@@ -1,6 +1,6 @@
 [project]
 name = "docvert"
-version = "0.2.0"
+version = "0.2.1"
 description = "Docvert: Convert documents to Markdown"
 readme = "README.md"
 requires-python = ">=3.14"
